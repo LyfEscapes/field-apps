@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2a1d12">
+<title>Trench Check</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: blunt jobsite tool for the competent person, plain words, regulation cited
+   IDEA: the cut-away trench sketch a foreman draws on the tailgate, drawn to scale
+   PICTURE: live to-scale cross-section of the trench, soil, slope, spoil pile and a 6 ft worker
+   COLOUR and TYPE: soil browns, hi-vis orange, danger red; Barlow Condensed signage + Barlow
+   LAYOUT: one app column, bottom tabs, section first then inputs then requirements */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#16120e);--card:light-dark(#f6f1ea,#231c16);--ink:light-dark(#1d160f,#f3ece2);--mute:light-dark(#6b5b4b,#b3a491);--line:light-dark(#e4d9cb,#3a2f25);--hv:#ff5a0a;--bad:#d7261e;--ok:#2a7d4f;--air:light-dark(#ffffff,#16120e)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
+header{background:#2a1d12;color:#fbe9d6;padding:20px max(5vw,16px) 22px;border-bottom:6px solid var(--hv)}
+header .in,main{max-width:720px;margin:0 auto}
+h1,h2,.big{font-family:"Barlow Condensed",Barlow,sans-serif;font-weight:700}
+h1{font-size:40px;line-height:1.02;margin:2px 0 4px;text-wrap:balance}
+h2{font-size:26px;line-height:1.1;margin:0 0 6px}
+header small{font-size:14px;opacity:.8}
+main{padding:16px max(4vw,14px) 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.mute{color:var(--mute);font-size:14px}
+.big{font-size:clamp(34px,9vw,52px);line-height:1;white-space:nowrap}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kv{background:var(--bg);border-radius:12px;padding:10px}.kv b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:26px;line-height:1.1;white-space:nowrap}.kv span{font-size:13px;color:var(--mute)}
+button{font:600 16px Barlow,system-ui,sans-serif;min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.pri{background:var(--hv)!important;border-color:var(--hv)!important;color:#1b0e04!important}
+button.ghost{background:none;border:0;color:var(--hv);padding:10px 4px}
+:focus-visible{outline:3px solid var(--hv);outline-offset:2px}
+input,select,textarea{font:16px Barlow,system-ui,sans-serif;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}
+.seg button{padding:8px 4px;font-size:15px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.step{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:4px}
+.step input{text-align:center;padding:6px 2px;-moz-appearance:textfield;appearance:textfield}.step input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.fig{position:relative;min-height:260px;background:var(--air);border-radius:12px;overflow:hidden}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.req{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.req:first-of-type{border-top:0}
+.dot{width:12px;height:12px;border-radius:50%;margin-top:6px}
+.cite{font-size:13px;color:var(--mute);white-space:nowrap}
+.banner{border-radius:14px;padding:12px 14px;font-weight:600;margin:0 0 14px;color:#fff}
+.chk{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:12px 0;border-top:1px solid var(--line)}
+.chk .seg button[aria-pressed=true][data-r=fail]{background:var(--bad);border-color:var(--bad);color:#fff}
+.chk .seg button[aria-pressed=true][data-r=pass]{background:var(--ok);border-color:var(--ok);color:#fff}
+.pill{display:inline-block;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap}
+#sig{width:100%;height:120px;background:var(--bg);border:1px dashed var(--mute);border-radius:12px;touch-action:none;display:block}
+nav{position:fixed;left:0;right:0;bottom:0;background:light-dark(rgba(255,255,255,.95),rgba(22,18,14,.95));border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+nav button{border:0;border-radius:0;background:none;font-size:14px;min-height:56px;color:var(--mute)}
+nav button[aria-current=true]{color:var(--ink);box-shadow:inset 0 4px 0 var(--hv)}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#2a1d12;color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90vw}
+#toast.on{opacity:1}
+details summary{cursor:pointer;font-weight:600;min-height:32px}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+.ph{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center}.ph img{width:120px;height:90px;object-fit:cover;border-radius:10px;cursor:pointer}
+.badge{display:inline-flex;gap:6px;align-items:center;border-radius:10px;padding:3px 10px;font-size:13px;font-weight:600;background:var(--bg);border:1px solid var(--line);margin:2px 4px 2px 0}
+.meter{position:relative;height:16px;border-radius:8px;background:linear-gradient(90deg,var(--ok) 0,var(--ok) var(--ok-to),var(--bad) var(--ok-to),var(--bad) 100%);margin:10px 0 4px}.meter i{position:absolute;top:-6px;width:4px;height:28px;background:var(--ink);border-radius:2px}
+.welcome{display:grid;gap:12px;padding:8px 0}
+input[type=range]{accent-color:var(--hv);min-height:32px}
+</style>
+</head>
+<body>
+<header><div class="in"><small>LyfEscapes · excavation safety · OSHA 29 CFR 1926 Subpart P</small><h1>Trench Check</h1><small>A planning and record-keeping aid. The competent person on site makes the call.</small></div></header>
+<main id="view"></main>
+<nav><div class="in" id="tabs"><button data-v="plan">Plan</button><button data-v="soil">Soil</button><button data-v="inspect">Inspect</button><button data-v="log">Log</button></div></nav>
+<div id="toast" role="status"></div>
+<script src="vendor/cv.js"></script>
+<script src="vendor/aruco.js"></script>
+<script src="sitelock.js"></script>
+<script>
+{
+const KEY='trenchcheck.v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SOIL={R:{name:'Stable rock',col:'#7f7a72'},A:{name:'Type A',col:'#94623b'},B:{name:'Type B',col:'#b5844f'},C:{name:'Type C',col:'#d2ad6f'}};
+const fmtH=h=>h===0?'Vertical':(h===.5?'½':h===.75?'¾':h===1.5?'1½':String(h))+' : 1';
+const deg=h=>h===0?90:Math.round(Math.atan(1/h)*180/Math.PI);
+const ft=v=>{const f=Math.floor(v+1e-9),i=Math.round((v-f)*12);return i===12?`${f+1} ft`:i?`${f} ft ${i} in`:`${f} ft`};
+function slopeH(t,d,short){if(t==='R')return 0;if(t==='A')return short&&d<=12?.5:.75;if(t==='B')return 1;return 1.5}
+const now=new Date();
+const stamp=d=>new Date(d).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const ago=h=>new Date(now-h*36e5).toISOString();
+const CHECKS=[
+ ['Utilities located and marked; exposed lines supported','1926.651(b)'],
+ ['Spoil, tools and equipment at least 2 ft back from the edge','1926.651(j)(2)'],
+ ['Protective system in place and right for this depth and soil','1926.652'],
+ ['Ladder, stairs or ramp within 25 ft of every worker (4 ft deep and over)','1926.651(c)(2)'],
+ ['No water building up, or it is being pumped and watched','1926.651(h)'],
+ ['No tension cracks, sloughing, bulging or soil falling from the face','1926.651(k)'],
+ ['Nearby structures, walks and poles stable or supported','1926.651(i)'],
+ ['Air tested where a bad atmosphere could exist (over 4 ft)','1926.651(g)'],
+ ['Barricades, covers or walkways where people or equipment cross','1926.651(l)'],
+ ['Warning system or stop logs for equipment working near the edge','1926.651(f)']];
+function sample(){
+  const all=r=>CHECKS.map((_,i)=>r[i]||'pass');
+  return{plan:{type:'B',depth:7.5,bottom:3,length:120,short:false,run:6,rise:7.5},soilIn:{mat:'cohesive',qu:1.2,fiss:false,vib:true,dist:false,water:false,layers:'none'},
+  log:[{t:ago(2),job:'Maple St sewer lateral',loc:'Sta 3+40, east side of road',cp:'R. Medina',trig:'Start of shift',wx:'Clear, 54°F',depth:7.5,soil:'B',sys:'Trench box',res:all({}),notes:'Box set, ladder at the north end.'},
+       {t:ago(26),job:'Maple St sewer lateral',loc:'Sta 3+40, east side of road',cp:'R. Medina',trig:'After rain',wx:'0.6 in overnight',depth:7,soil:'B',sys:'Trench box',res:all({4:'fail',5:'fail'}),notes:'Water in the bottom and sloughing on the west face. Crew held out, pumped, face trimmed back. Re-inspected 10:40, cleared.'},
+       {t:ago(50),job:'Riverside Dr water tap',loc:'In front of 2210',cp:'J. Okafor',trig:'Start of shift',wx:'Overcast',depth:4.5,soil:'C',sys:'Sloping',res:all({7:'na',9:'na'}),notes:''}]};
+}
+const SL=window.SiteLock,store=new SL.Store('trenchcheck');
+let S=null,started=false,caps=new Map(),cmpApi=null,slope={on:false,deg:null,stop:null,hist:[],lock:null,noSensor:false,timer:null};
+const blank=()=>({plan:{type:'B',depth:6,bottom:3,length:60,short:false,run:6,rise:6},soilIn:{mat:'cohesive',qu:1,fiss:false,vib:false,dist:false,water:false,layers:'none'},log:[],stations:{}});
+const save=()=>store.put('kv',{k:'tc-state',v:S});
+const fmtT=d=>new Date(d).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+let view='plan',draft=null,openLog=-1;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2400)}
+function copy(t,m){try{navigator.clipboard.writeText(t).then(()=>toast(m),()=>toast('Copy was blocked here'))}catch(e){toast('Copy was blocked here')}}
+
+/* ---------- plan ---------- */
+function calc(){const P=S.plan,H=slopeH(P.type,P.depth,P.short),sb=P.depth*H;return{H,sb,top:P.bottom+2*sb,ang:deg(H)}}
+function reqs(){
+  const P=S.plan,d=P.depth,r=[];
+  if(d>20)r.push(['bad','Over 20 ft deep: sloping or benching must be designed by a registered professional engineer. The table slopes below are for reference only.','App. B (b)']);
+  if(d>=5&&P.type!=='R')r.push(['bad','5 ft or deeper: a protective system is required. Use this slope, a benching plan, shoring, or a shield.','1926.652(a)(1)']);
+  if(d<5)r.push(['hv','Under 5 ft: you can skip a protective system only if the competent person sees no sign of a possible cave-in.','1926.652(a)(1)(ii)']);
+  if(d>=4)r.push(['hv',`Ladder, stairs or ramp within 25 ft of every worker. For a ${P.length} ft run that's at least ${Math.max(1,Math.ceil(P.length/50))} ladders, rails 3 ft above the top.`,'1926.651(c)(2)']);
+  if(d>4)r.push(['hv','Test the air before entry wherever a low-oxygen or toxic atmosphere could exist, such as near sewers, landfills or fuel tanks.','1926.651(g)(1)']);
+  r.push(['ink','Keep the spoil pile, tools and equipment at least 2 ft back from the edge.','1926.651(j)(2)']);
+  if(P.type==='C')r.push(['ink','Benching is not allowed in Type C soil. Slope it, shore it, or use a shield.','App. B']);
+  if(P.type==='B')r.push(['ink','Benching in Type B is only allowed in cohesive soil.','App. B']);
+  if(P.type==='A'&&P.short&&d<=12)r.push(['ink','The ½ : 1 short-term slope only holds while the trench is open 24 hours or less.','App. B']);
+  r.push(['ink','The competent person inspects daily before work starts, as needed during the shift, and after every rainstorm.','1926.651(k)(1)']);
+  return r;
+}
+function drawSection(svg){
+  const W=svg.clientWidth,Hp=svg.clientHeight;if(!W||!Hp)return;
+  const P=S.plan,{H,sb,top}=calc(),d=Math.max(P.depth,.5),b=Math.max(P.bottom,.5);
+  const spW=Math.max(3,d*1.1),spH=Math.max(1.5,d*.4),mR=2+spW+1.2,Lp=W<480?78:92;
+  const wW=top+mR,wH=d+Math.max(spH,1)+1.4;
+  const s=Math.min((W-Lp-12)/wW,(Hp-56)/wH),ox=Lp+(W-Lp-12-wW*s)/2,gy=36+(Math.max(spH,1)+.8)*s;
+  const X=v=>ox+v*s,Y=v=>gy+v*s,xl=0,xr=top,by=d;
+  const col=SOIL[P.type].col,small=W<480;
+  const tr=`${X(xl)},${Y(0)} ${X(xl+sb)},${Y(by)} ${X(xl+sb+b)},${Y(by)} ${X(xr)},${Y(0)}`;
+  const spX=xr+2,spoil=`${X(spX)},${Y(0)} ${X(spX+spW*.45)},${Y(-spH)} ${X(spX+spW)},${Y(0)}`;
+  const man=h=>{const cx=X(xl+sb+b/2),fy=Y(by);const u=s;return`<g fill="var(--ink)"><circle cx="${cx}" cy="${fy-5.55*u}" r="${.45*u}"/><rect x="${cx-.38*u}" y="${fy-5*u}" width="${.76*u}" height="${2.4*u}" rx="${.3*u}"/><rect x="${cx-.36*u}" y="${fy-2.7*u}" width="${.3*u}" height="${2.7*u}"/><rect x="${cx+.06*u}" y="${fy-2.7*u}" width="${.3*u}" height="${2.7*u}"/><rect x="${cx-.45*u}" y="${fy-5.4*u}" width="${.9*u}" height="${.3*u}" rx="${.15*u}" fill="var(--hv)"/></g>`};
+  const dimY=Y(-.25);
+  svg.innerHTML=`<defs><pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="10" stroke="rgba(0,0,0,.14)" stroke-width="3"/></pattern></defs>
+  <rect x="0" y="${Y(0)}" width="${W}" height="${Hp-Y(0)}" fill="${col}"/><rect x="0" y="${Y(0)}" width="${W}" height="${Hp-Y(0)}" fill="url(#hatch)"/>
+  <polygon points="${tr}" fill="var(--air)"/>
+  <polyline points="${tr}" fill="none" stroke="#3a2614" stroke-width="2"/>
+  <line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3a2614" stroke-width="2"/>
+  <polygon points="${spoil}" fill="${col}" stroke="#3a2614" stroke-width="1.5"/><polygon points="${spoil}" fill="url(#hatch)"/>
+  ${d<=12?man():''}
+  <g font-family="Barlow,sans-serif" font-size="${small?12:13}" font-weight="600" fill="var(--ink)">
+   <line x1="${X(xl)}" x2="${X(xr)}" y1="${Y(-1)-6}" y2="${Y(-1)-6}" stroke="var(--ink)"/><text x="${(X(xl)+X(xr))/2}" y="${Y(-1)-12}" text-anchor="middle">Top ${ft(top)}</text>
+   <line x1="${X(xl)}" x2="${X(xl)}" y1="${Y(-1)-12}" y2="${Y(0)}" stroke="var(--ink)" stroke-dasharray="3 3"/><line x1="${X(xr)}" x2="${X(xr)}" y1="${Y(-1)-12}" y2="${Y(0)}" stroke="var(--ink)" stroke-dasharray="3 3"/>
+   <line x1="${X(xr)}" x2="${X(spX)}" y1="${dimY}" y2="${dimY}" stroke="var(--bad)" stroke-width="2"/><text x="${X(xr)+6}" y="${Y(0)+18}" fill="#fff">2 ft min</text>
+   <text x="${X(spX+spW*.5)}" y="${Y(-spH)-6}" text-anchor="middle" fill="var(--mute)">Spoil</text>
+   <line x1="${X(xl)-14}" x2="${X(xl)-14}" y1="${Y(0)}" y2="${Y(by)}" stroke="#fff" stroke-width="2"/><text x="${X(xl)-20}" y="${(Y(0)+Y(by))/2}" text-anchor="end" fill="#fff">${ft(P.depth)}</text>
+   <text x="${(X(xl+sb)+X(xl+sb+b))/2}" y="${Y(by)+18}" text-anchor="middle" fill="#fff">Bottom ${ft(P.bottom)}</text>
+   ${H?`<text x="${X(xl+sb*.5)+10}" y="${Y(by*.5)}" fill="var(--ink)">${deg(H)}°</text>`:''}
+   ${d>12?`<text x="${(X(xl+sb)+X(xl+sb+b))/2}" y="${Y(by*.6)}" text-anchor="middle" fill="var(--mute)">6 ft worker not shown at this depth</text>`:''}
+  </g>`;
+}
+function vPlan(){
+  const P=S.plan,c=calc(),rq=reqs(),colr={bad:'var(--bad)',hv:'var(--hv)',ink:'var(--mute)'};
+  const over=P.depth>20;
+  return`${over?'<div class="banner" style="background:var(--bad)">Over 20 ft: needs a design by a registered professional engineer.</div>':''}
+  <div class="card"><div class="row" style="align-items:flex-end"><div class="sp"><div class="mute">Max allowable slope, ${SOIL[P.type].name}</div><div class="big">${fmtH(c.H)}${c.H?` <span style="font-size:.55em">(${c.ang}°)</span>`:''}</div></div></div>
+  <div class="fig" style="margin-top:12px"><svg id="sec" role="img" aria-label="Trench cross-section to scale"></svg></div>
+  <div class="grid3" style="margin-top:10px"><div class="kv"><b>${ft(c.sb)}</b><span>Cut back each side</span></div><div class="kv"><b>${ft(c.top)}</b><span>Width at the top</span></div><div class="kv"><b>${ft(c.top/2+2)}</b><span>Centerline to spoil, min</span></div></div></div>
+  <div class="card"><label>Soil type</label><div class="seg">${['R','A','B','C'].map(t=>`<button data-type="${t}" aria-pressed="${P.type===t}">${t==='R'?'Rock':t}</button>`).join('')}</div>
+  <div class="grid2"><div><label for="pd">Depth (ft)</label><div class="step"><button data-n="depth" data-d="-0.5" aria-label="Less depth">−</button><input id="pd" data-f="depth" type="number" step="0.5" min="0" inputmode="decimal" value="${P.depth}"><button data-n="depth" data-d="0.5" aria-label="More depth">+</button></div></div>
+  <div><label for="pb">Bottom width (ft)</label><div class="step"><button data-n="bottom" data-d="-0.5" aria-label="Narrower">−</button><input id="pb" data-f="bottom" type="number" step="0.5" min="0" inputmode="decimal" value="${P.bottom}"><button data-n="bottom" data-d="0.5" aria-label="Wider">+</button></div></div></div>
+  <label for="pl">Length of the run (ft)</label><input id="pl" data-f="length" type="number" min="0" inputmode="numeric" value="${P.length}">
+  <label style="display:flex;gap:10px;align-items:center;font-weight:400;font-size:16px;margin-top:12px"><input type="checkbox" id="pshort" style="width:22px;min-height:22px" ${P.short?'checked':''}> Open 24 hours or less (changes Type A only)</label></div>
+  <div class="card"><h2>What this trench needs</h2>${rq.map(r=>`<div class="req"><span class="dot" style="background:${colr[r[0]]}"></span><div>${r[1]} <span class="cite">${r[2]}</span></div></div>`).join('')}</div>
+  <div class="card"><h2>Check a cut you already made</h2><p class="mute" style="margin-top:0">Measure the wall with a tape and level: how far it runs back, and how far it drops over that run.</p>
+  <div class="grid2"><div><label for="cr">Runs back (ft)</label><input id="cr" data-f="run" type="number" step="0.5" inputmode="decimal" value="${P.run}"></div><div><label for="ci">Drops (ft)</label><input id="ci" data-f="rise" type="number" step="0.5" inputmode="decimal" value="${P.rise}"></div></div>${cutResult()}</div>${vSlope()}`;
+}
+function cutResult(){const P=S.plan,{H}=calc();if(!(P.rise>0))return'';const act=P.run/P.rise,need=P.rise*H-P.run;
+  const okc=act>=H-1e-9;return`<div class="banner" style="background:${okc?'var(--ok)':'var(--bad)'};margin:12px 0 0">${okc?`OK: ${act.toFixed(2)} : 1 is no steeper than ${fmtH(H)}.`:`Too steep: ${act.toFixed(2)} : 1. Cut back about ${ft(need)} more at the top to reach ${fmtH(H)}.`}</div>`}
+
+/* ---------- soil ---------- */
+function classify(){const s=S.soilIn;
+  if(s.mat==='rock')return s.water?['C','Submerged rock that is not stable classifies as Type C.']:s.fiss?['B','Dry rock that is not stable classifies as Type B.']:['R','Natural solid rock that stays intact with vertical sides.'];
+  if(s.water)return['C','Water is seeping out of the soil, or it is submerged.'];
+  if(s.layers==='steep')return['C','Layers dip into the trench at 4H:1V or steeper.'];
+  if(s.mat==='granular')return['C','Sand, gravel and loamy sand are Type C.'];
+  if(s.qu<=.5)return['C','Unconfined compressive strength of 0.5 tsf or less.'];
+  if(s.mat==='silt')return['B','Silt, silt loam, sandy loam and angular gravel are Type B at best.'];
+  if(s.qu<1.5)return['B','Strength is between 0.5 and 1.5 tsf.'];
+  const why=[s.fiss&&'fissured',s.vib&&'subject to vibration',s.dist&&'previously disturbed',s.layers==='mild'&&'layered and dipping into the trench'].filter(Boolean);
+  if(why.length)return['B',`Strong enough for Type A, but it's ${why.join(', ')}, so it drops to Type B.`];
+  return['A','Cohesive soil at 1.5 tsf or more, not fissured, disturbed or shaken.'];
+}
+function vSoil(){const s=S.soilIn,[t,why]=classify(),h=slopeH(t,S.plan.depth,false);
+  const box=(k,l)=>`<label style="display:flex;gap:10px;align-items:center;font-weight:400;font-size:16px"><input type="checkbox" data-s="${k}" style="width:22px;min-height:22px" ${s[k]?'checked':''}> ${l}</label>`;
+  return`<div class="card"><div class="mute">Suggested classification</div><div class="big">${SOIL[t].name}</div><p style="margin:6px 0 10px">${why} Max slope ${fmtH(h)}${h?` (${deg(h)}°)`:''}.</p><button class="pri" data-act="usesoil">Use ${SOIL[t].name} in the plan</button></div>
+  <div class="card"><label for="sm">What's in the wall</label><select id="sm" data-s="mat"><option value="cohesive" ${s.mat==='cohesive'?'selected':''}>Clay, silty clay, sandy clay, clay loam</option><option value="silt" ${s.mat==='silt'?'selected':''}>Silt, silt loam, sandy loam, angular gravel</option><option value="granular" ${s.mat==='granular'?'selected':''}>Sand, gravel, loamy sand</option><option value="rock" ${s.mat==='rock'?'selected':''}>Rock</option></select>
+  <label for="sq">Pocket penetrometer (tsf)</label><input id="sq" data-s="qu" type="number" step="0.25" min="0" inputmode="decimal" value="${s.qu}">
+  <div class="mute">No penetrometer? Thumb test: readily dented but pushed in only with great effort suggests about 1.5 tsf. Thumb sinks in several inches easily suggests 0.5 or less.</div>
+  <div style="margin-top:10px">${box('fiss',s.mat==='rock'?'Rock is not stable':'Fissured (cracks, slicks, crumbles when dry)')}${box('vib','Vibration from traffic, pile driving or similar')}${box('dist','Previously dug or backfilled')}${box('water','Water seeping out, or submerged')}</div>
+  <label for="sl">Layers</label><select id="sl" data-s="layers"><option value="none" ${s.layers==='none'?'selected':''}>Not layered, or layers dip away</option><option value="mild" ${s.layers==='mild'?'selected':''}>Dip toward the trench, flatter than 4H:1V</option><option value="steep" ${s.layers==='steep'?'selected':''}>Dip toward the trench, 4H:1V or steeper</option></select></div>
+  <p class="mute">Appendix A requires at least one visual and one manual test by the competent person. This is a second opinion, not the classification.</p>`}
+
+/* ---------- inspect ---------- */
+function newDraft(){const P=S.plan,last=S.log[0]||{};return{t:null,job:last.job||'',loc:last.loc||'',cp:last.cp||'',trig:'Start of shift',wx:'',depth:P.depth,soil:P.type,sys:last.sys||(P.depth<5?'None (under 5 ft)':'Sloping'),res:CHECKS.map(()=>null),notes:'',sig:null}}
+function vInspect(){draft=draft||newDraft();const D=draft,fails=D.res.filter(r=>r==='fail').length,done=D.res.filter(Boolean).length;
+  const sel=(id,k,opts)=>`<select id="${id}" data-k="${k}">${opts.map(o=>`<option ${D[k]===o?'selected':''}>${o}</option>`).join('')}</select>`;
+  return`${fails?`<div class="banner" style="background:var(--bad)">Hazard found: get everyone out of the trench until it's fixed. 1926.651(k)(2)</div>`:''}
+  <div class="card"><h2>Daily inspection</h2><div class="grid2"><div><label for="ij">Job</label><input id="ij" data-k="job" value="${esc(D.job)}"></div><div><label for="il">Location</label><input id="il" data-k="loc" value="${esc(D.loc)}"></div>
+  <div><label for="ic">Competent person</label><input id="ic" data-k="cp" value="${esc(D.cp)}"></div><div><label for="it">Reason</label>${sel('it','trig',['Start of shift','After rain','After a change in conditions','During shift','Other'])}</div>
+  <div><label for="iw">Weather</label><input id="iw" data-k="wx" value="${esc(D.wx)}" placeholder="Clear, 54°F"></div><div><label for="is">Protection</label>${sel('is','sys',['Sloping','Benching','Trench box','Hydraulic shoring','Timber shoring','None (under 5 ft)'])}</div></div>
+  <p class="mute" style="margin-bottom:0">${ft(D.depth)} deep in ${SOIL[D.soil].name} soil, from the Plan tab.</p></div>
+  <div class="card"><div class="row"><h2 class="sp">Checklist</h2><span class="mute">${done} of ${CHECKS.length}</span><button class="ghost" data-act="allpass">Mark rest OK</button></div>
+  ${CHECKS.map((c,i)=>`<div class="chk"><div>${c[0]} <span class="cite">${c[1]}</span></div><div class="seg">${[['pass','OK'],['fail','Problem'],['na','N/A']].map(([k,l])=>`<button data-chk="${i}" data-r="${k}" aria-pressed="${D.res[i]===k}">${l}</button>`).join('')}</div></div>`).join('')}</div>
+  ${photoCard()}
+  <div class="card"><label for="in">Notes and corrective action</label><textarea id="in" data-k="notes" rows="3">${esc(D.notes)}</textarea>
+  <label>Signature</label><canvas id="sig" aria-label="Sign here"></canvas><div class="row"><span class="mute sp">Sign with your finger</span><button class="ghost" data-act="clearsig">Clear</button></div>
+  <div class="row" style="margin-top:10px"><button class="pri" data-act="saveinsp">Save inspection</button></div></div>`}
+function sigPad(){const c=$('#sig');if(!c)return;const r=c.getBoundingClientRect();c.width=r.width*2;c.height=r.height*2;const x=c.getContext('2d');x.lineWidth=4;x.lineCap='round';x.strokeStyle=getComputedStyle(document.body).color;
+  if(draft.sig){const im=new Image();im.onload=()=>x.drawImage(im,0,0,c.width,c.height);im.src=draft.sig}
+  let on=false;const p=e=>[(e.clientX-r.left)*2,(e.clientY-r.top)*2];
+  c.onpointerdown=e=>{on=true;c.setPointerCapture(e.pointerId);x.beginPath();x.moveTo(...p(e))};
+  c.onpointermove=e=>{if(!on)return;x.lineTo(...p(e));x.stroke()};
+  c.onpointerup=()=>{on=false;draft.sig=c.toDataURL()}}
+
+/* ---------- log ---------- */
+function entryText(e){return`TRENCH INSPECTION\n${stamp(e.t)} · ${e.trig}\n${e.job}, ${e.loc}${e.geo?` (GPS ${e.geo.lat.toFixed(6)}, ${e.geo.lon.toFixed(6)})`:''}\nCompetent person: ${e.cp}\n${ft(+e.depth)} deep, ${SOIL[e.soil].name}, ${e.sys}. Weather: ${e.wx||'n/a'}\n\n${CHECKS.map((c,i)=>`${(e.res[i]||'—').toUpperCase().padEnd(5)} ${c[0]}`).join('\n')}\n\nNotes: ${e.notes||'none'}`}
+function vLog(){return`<div class="row" style="margin-bottom:10px"><h2 class="sp">Inspection log</h2><span class="mute">${S.log.length} saved</span></div>
+  ${S.log.map((e,i)=>{const f=e.res.filter(r=>r==='fail').length;return`<div class="card"><button style="all:unset;display:block;width:100%;cursor:pointer" data-open="${i}"><div class="row"><div class="sp"><b>${esc(e.job)}</b><div class="mute">${stamp(e.t)} · ${esc(e.trig)} · ${esc(e.cp)}</div></div><span class="pill" style="background:${f?'var(--bad)':'var(--ok)'}">${f?f+' problem'+(f>1?'s':''):'All OK'}</span></div></button>
+  ${openLog===i?`<div style="margin-top:10px"><div class="mute">${esc(e.loc)} · ${ft(+e.depth)} deep, ${SOIL[e.soil].name}, ${esc(e.sys)} · ${esc(e.wx)}</div>
+  ${CHECKS.map((c,j)=>`<div class="req"><span class="dot" style="background:${e.res[j]==='fail'?'var(--bad)':e.res[j]==='pass'?'var(--ok)':'var(--line)'}"></span><div>${c[0]}</div></div>`).join('')}
+  ${e.cap&&caps.get(e.cap)?`<div style="margin-top:10px"><div class="mute" style="margin-bottom:6px">${e.prevCap&&caps.get(e.prevCap)?`Trench photo, lined up with ${fmtT(caps.get(e.prevCap).t)}. Drag to compare; switch to Difference to spot new cracks.`:'Trench photo'}${e.geo?` · GPS ${e.geo.lat.toFixed(6)}, ${e.geo.lon.toFixed(6)}`:''}</div><div id="lcmp" data-cap="${e.cap}" data-prev="${e.prevCap||''}"></div>${e.prevCap?'<div class="seg" style="margin-top:8px"><button data-lm="swipe" aria-pressed="true">Swipe</button><button data-lm="diff" aria-pressed="false">Difference</button></div>':''}</div>`:''}
+  ${e.notes?`<p><b>Notes.</b> ${esc(e.notes)}</p>`:''}${e.sig?`<img src="${e.sig}" alt="Signature" style="max-width:220px;height:auto;background:#fff;border-radius:8px">`:''}
+  <div class="row" style="margin-top:8px"><button data-copy="${i}">Copy as text</button></div></div>`:''}</div>`}).join('')}
+  <button class="ghost" data-act="wipe">Erase everything on this phone</button> <a class="mute" href="privacy.html">Privacy</a>`}
+
+/* ---------- welcome ---------- */
+function vWelcome(){return`<div class="welcome"><h2>Welcome to Trench Check</h2><p style="margin:0">Plan the cut for your soil and depth, check a slope with your phone, and keep a signed daily inspection log with a photo from the same spot every day.</p><button class="pri" data-act="fresh">Start a new job</button><button data-act="sample">Explore with a sample job</button><p class="mute">Everything stays on this phone. <a href="privacy.html">Privacy</a></p></div>`}
+
+/* ---------- phone as a slope meter ---------- */
+function vSlope(){const H=calc().H,lim=deg(H);return`<div class="card"><h2>Measure a slope with your phone</h2><p class="mute" style="margin-top:0">Lay the phone flat on the cut face, long edge pointing straight down the slope, and hold still. It locks when the reading settles.</p>
+  <div class="row" style="align-items:flex-end"><div class="big sp" id="slv">–</div><div class="mute" id="slr" style="text-align:right"></div></div>
+  <div class="meter" style="--ok-to:${(lim/90*100).toFixed(1)}%" aria-hidden="true"><i id="sln" style="left:0;display:none"></i></div><div class="row mute" style="font-size:13px;justify-content:space-between"><span>0° flat</span><span>Max ${H?lim+'°':'vertical'} for ${SOIL[S.plan.type].name}</span><span>90°</span></div>
+  <div class="row" style="margin-top:10px">${slope.on?'<button data-act="slopestop">Stop</button>':'<button class="pri" data-act="slopestart">Start slope meter</button>'}<button data-act="slopeuse">Use for the cut check</button></div>
+  <div id="slsimrow" ${slope.noSensor?'':'hidden'}><label for="slsim">No tilt sensor here. Simulated reading</label><input type="range" id="slsim" min="20" max="80" value="${slope.deg??45}" style="width:100%"></div></div>`}
+function paintSlope(){const v=$('#slv');if(!v)return;const d=slope.lock??slope.deg,H=calc().H,lim=deg(H);if(d==null){v.textContent='–';$('#slr').textContent=slope.on?'Waiting for the sensor…':'';return}
+  const ok=d<=lim+.5,r=SL.Incline.ratio(d);v.textContent=`${d.toFixed(1)}°`;v.style.color=ok?'var(--ok)':'var(--bad)';$('#slr').innerHTML=`${r.toFixed(2)} : 1${slope.lock!=null?' · locked':''}<br><b>${ok?'Within':'Steeper than'} ${fmtH(H)}</b>`;const n=$('#sln');n.style.display='block';n.style.left=`calc(${(d/90*100).toFixed(1)}% - 2px)`;const sr=$('#slsimrow');if(sr)sr.hidden=!slope.noSensor}
+function slopeStart(){slope.on=true;slope.lock=null;slope.hist=[];slope.stop=SL.Orient.start(o=>{if(o.err){slope.noSensor=true;render();return}const d=SL.Incline.angle(o);if(d==null)return;slope.noSensor=false;slope.deg=d;const now=Date.now();slope.hist=slope.hist.filter(h=>now-h[0]<1500).concat([[now,d]]);
+  if(slope.hist.length>8){const a=slope.hist.map(h=>h[1]),m=a.reduce((x,y)=>x+y)/a.length,sd=Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length);if(sd<.3&&now-slope.hist[0][0]>1200)slope.lock=m}paintSlope()});
+  clearTimeout(slope.timer);slope.timer=setTimeout(()=>{if(slope.deg==null){slope.noSensor=true;render()}},2500);render()}
+function slopeStop(){slope.on=false;slope.stop&&slope.stop();render()}
+
+/* ---------- trench photo, same spot every day ---------- */
+const stKey=d=>(d.job.trim()+'|'+d.loc.trim()).toLowerCase();
+async function trenchScene(seed,crack,box){const c=document.createElement('canvas');c.width=1440;c.height=1080;const g=c.getContext('2d');let s=seed;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  g.fillStyle='#8a6a45';g.fillRect(0,0,1440,1080);for(let i=0;i<14000;i++){const v=r();g.fillStyle=`rgba(${110+v*60|0},${80+v*45|0},${50+v*30|0},.55)`;g.fillRect(r()*1440,r()*1080,2+r()*3,2+r()*3)}
+  for(let i=0;i<500;i++){const x=r()*1440,y=r()*260;g.strokeStyle='#5c7a38';g.lineWidth=2;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*8,y-10-r()*14);g.stroke()}
+  g.fillStyle='#6b4f30';g.beginPath();g.moveTo(420,1080);g.lineTo(640,160);g.lineTo(820,160);g.lineTo(1040,1080);g.fill();
+  for(let k=0;k<6;k++){g.fillStyle=k%2?'rgba(140,100,60,.5)':'rgba(90,65,40,.5)';g.beginPath();g.moveTo(420+k*14,1080);g.lineTo(640+k*4,160);g.lineTo(650+k*4,160);g.lineTo(440+k*14,1080);g.fill();g.beginPath();g.moveTo(1040-k*14,1080);g.lineTo(820-k*4,160);g.lineTo(810-k*4,160);g.lineTo(1020-k*14,1080);g.fill()}
+  g.fillStyle='#1d1610';g.beginPath();g.moveTo(560,1080);g.lineTo(690,160);g.lineTo(770,160);g.lineTo(900,1080);g.fill();
+  if(box){g.fillStyle='#7d8790';g.beginPath();g.moveTo(520,1080);g.lineTo(675,320);g.lineTo(692,320);g.lineTo(560,1080);g.fill();g.beginPath();g.moveTo(940,1080);g.lineTo(785,320);g.lineTo(768,320);g.lineTo(900,1080);g.fill();g.strokeStyle='#c9ced3';g.lineWidth=6;for(let y=420;y<1080;y+=160){const f=(y-320)/760;g.beginPath();g.moveTo(560+(1-f)*130,y);g.lineTo(900-(1-f)*130,y);g.stroke()}}
+  g.strokeStyle='#d9b23a';g.lineWidth=7;g.beginPath();g.moveTo(735,1080);g.lineTo(728,520);g.moveTo(775,1080);g.lineTo(752,520);g.stroke();for(let y=560;y<1080;y+=70){g.beginPath();g.moveTo(729+(1080-y)*.012,y);g.lineTo(754+(1080-y)*.04,y);g.stroke()}
+  g.fillStyle='#5a4128';g.beginPath();g.moveTo(1120,1080);for(let x=1120;x<=1440;x+=20)g.lineTo(x,640-Math.sin((x-1120)/320*Math.PI)*300-r()*30);g.lineTo(1440,1080);g.fill();
+  g.fillStyle='#e8e8e8';for(let i=0;i<4;i++){g.fillRect(140+i*60,880-i*170,16,60);g.fillStyle='#ff5a0a';g.fillRect(140+i*60,880-i*170,16,18);g.fillStyle='#e8e8e8'}
+  if(crack){g.strokeStyle='#1a120b';g.lineWidth=7;g.lineCap='round';g.beginPath();let x=300,y=1060;g.moveTo(x,y);while(y>220){x+=12+r()*14;y-=40+r()*18;g.lineTo(x+(r()-.5)*14,y)}g.stroke()}
+  return c}
+function shootT(w,t){const c=document.createElement('canvas');c.width=1200;c.height=900;const g=c.getContext('2d');g.fillStyle='#222';g.fillRect(0,0,1200,900);g.save();g.translate(600+t.dx*1200,450+t.dy*1200);g.rotate(t.rot*Math.PI/180);g.scale(t.scale,t.scale);g.translate(-720,-540);g.drawImage(w,0,0);g.restore();return c}
+function photoCard(){const D=draft,c=D.cap&&caps.get(D.cap),st=S.stations[stKey(D)],prev=st&&lastCapAt(stKey(D));
+  if(!c)return`<div class="card"><h2>Trench photo</h2><p class="mute" style="margin-top:0">${st?'This location has a photo point. The camera shows the last photo as a ghost so today\'s shot lines up, and changes like new cracks along the edge stand out.':'Shoot from a spot you can return to. Tomorrow the camera lines you up with this photo.'}</p><button class="pri" data-act="photo">${st?'Photo from the same spot':'Photo the trench'}</button></div>`;
+  return`<div class="card"><h2>Trench photo</h2><div class="row" style="margin-bottom:8px">${c.align?`<span class="badge">Lined up ${Math.round(c.align.q*100)}% with ${fmtT(prev.t)}</span>`:'<span class="badge">New photo point</span>'}${c.geo?`<span class="badge">GPS ±${Math.round((c.geo.acc||0)*3.281)} ft</span>`:''}</div>
+  <div id="dcmp"></div>${prev&&c.align?'<div class="seg" style="margin-top:8px"><button data-lm="swipe" aria-pressed="true">Swipe</button><button data-lm="diff" aria-pressed="false">Difference</button></div><p class="mute" style="margin-bottom:0">Left is the last inspection, right is now. Difference lights up only what changed.</p>':''}<div class="row" style="margin-top:8px"><button data-act="photo">Retake</button></div></div>`}
+function lastCapAt(key){const e=S.log.find(x=>x.cap&&stKey(x)===key);return e?caps.get(e.cap):caps.get(S.stations[key]?.ref)}
+async function mountPhoto(){const box=$('#dcmp');if(!box||!draft?.cap)return;const c=caps.get(draft.cap),prev=lastCapAt(stKey(draft));const b=await SL.img(c.img);
+  if(prev&&c.align){const a=await SL.img(prev.img);const M=SL.H.mul(c.align.H,SL.H.inv(prev.align?.H||[1,0,0,0,1,0,0,0,1])||[1,0,0,0,1,0,0,0,1]);cmpApi=SL.Compare.mount(box,a,b,M,{mode:'swipe'})}else{box.innerHTML='';const im=document.createElement('img');im.src=c.img;im.style.cssText='width:100%;border-radius:12px;display:block';box.appendChild(im)}}
+async function mountLogCmp(){const box=$('#lcmp');if(!box)return;const c=caps.get(box.dataset.cap),p=caps.get(box.dataset.prev);if(!c)return;const b=await SL.img(c.img);
+  if(p&&c.align){const a=await SL.img(p.img);const M=SL.H.mul(c.align.H,SL.H.inv(p.align?.H||[1,0,0,0,1,0,0,0,1])||[1,0,0,0,1,0,0,0,1]);cmpApi=SL.Compare.mount(box,a,b,M,{mode:'swipe'})}else{const im=document.createElement('img');im.src=c.img;im.style.cssText='width:100%;border-radius:12px;display:block';box.appendChild(im)}}
+async function trenchPhoto(){const D=draft;if(!D.job.trim()||!D.loc.trim()){toast('Add the job and location first, so the photo point has a name');return}const key=stKey(D),st=S.stations[key],ref=st&&caps.get(st.ref),sim=shootT(await trenchScene(99,!!st,st?st.box!==false:D.sys==='Trench box'),SL.T.id());
+  const onDone=async r=>{if(!r)return;const prev=lastCapAt(key);let align=r.align||null;if(align&&prev&&prev.id!==st?.ref&&prev.align){align={...align,H:align.H}}
+    const id='tc-'+Date.now().toString(36),cap={id,spot:key,app:'trenchcheck',t:r.t,img:r.img,w:r.w,h:r.h,geo:r.geo,pitch:r.pitch,roll:r.roll,heading:r.heading,pin:r.pin,align,how:r.how};caps.set(id,cap);await store.put('caps',cap);D.cap=id;D.prevCap=st?(lastCapAt(key)?.id||null):null;D.geo=r.geo;render();toast(align?`Lined up ${Math.round(align.q*100)}% with the last photo`:'Photo point saved')};
+  window.__tcScan=ref?SL.Scanner.open({mode:'return',title:'Same spot as last time',ref:{img:ref.img,w:ref.w,h:ref.h,geo:st.geo,pitch:st.pitch,roll:st.roll,heading:st.heading,pin:st.pin},sim:{img:sim,geo:st.geo},onDone}):SL.Scanner.open({mode:'ref',needCard:false,title:'Trench photo point',sim:{img:sim,geo:{lat:35.0013,lon:-81.0021,acc:4}},onDone})}
+async function seedPhotos(){const e1=S.log[1],e0=S.log[0],key=stKey(e1),w1=await trenchScene(99,false,true),w0=await trenchScene(99,false,true);
+  const mk=async(w,t,when,id,align)=>{const c=shootT(w,t),cap={id,spot:key,app:'trenchcheck',t:when,img:c.toDataURL('image/jpeg',.8),w:1200,h:900,geo:{lat:35.0013,lon:-81.0021,acc:4},pitch:52,roll:1,heading:300,pin:{x:.3,y:.6,cell:'C4'},align,how:'auto'};caps.set(id,cap);await store.put('caps',cap);return cap};
+  const r=await mk(w1,SL.T.id(),e1.t,'tc-s1',null);const t={dx:.015,dy:-.01,rot:1.5,scale:1.03};await mk(w0,t,e0.t,'tc-s0',{H:SL.T.toH(t,1200,900),t,method:'image',q:.91});
+  e1.cap='tc-s1';e1.geo=r.geo;e0.cap='tc-s0';e0.prevCap='tc-s1';e0.geo=r.geo;S.stations={[key]:{ref:'tc-s1',geo:r.geo,pitch:52,roll:1,heading:300,pin:r.pin,w:1200,h:900,box:true}}}
+
+/* ---------- render ---------- */
+let ro;
+function render(){
+  cmpApi&&cmpApi.destroy();cmpApi=null;
+  $('#view').innerHTML=!started?vWelcome():view==='plan'?vPlan():view==='soil'?vSoil():view==='inspect'?vInspect():vLog();
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',started&&b.dataset.v===view));
+  if(view==='inspect'&&started)mountPhoto();if(view==='log'&&started)mountLogCmp();if(view==='plan')paintSlope();
+  ro&&ro.disconnect();const sec=$('#sec');if(sec){ro=new ResizeObserver(()=>drawSection(sec));ro.observe(sec)}
+  if(view==='inspect'&&started)sigPad();
+  try{history.replaceState(null,'','#'+view)}catch(e){}
+}
+document.addEventListener('click',async e=>{const t=e.target.closest('button');if(!t||t.closest('.sl-root'))return;
+  if(t.dataset.lm){document.querySelectorAll('[data-lm]').forEach(x=>x.setAttribute('aria-pressed',x===t));cmpApi&&cmpApi.set('mode',t.dataset.lm);return}
+  if(t.dataset.v){view=t.dataset.v;render();scrollTo(0,0);return}
+  if(t.dataset.type){S.plan.type=t.dataset.type;save();render();return}
+  if(t.dataset.n){const k=t.dataset.n;S.plan[k]=Math.max(0,Math.round((+S.plan[k]+ +t.dataset.d)*2)/2);save();render();return}
+  if(t.dataset.chk!=null){draft.res[+t.dataset.chk]=t.dataset.r;const y=scrollY;render();scrollTo(0,y);return}
+  if(t.dataset.open!=null){openLog=openLog===+t.dataset.open?-1:+t.dataset.open;render();return}
+  if(t.dataset.copy!=null){copy(entryText(S.log[+t.dataset.copy]),'Inspection copied');return}
+  const a=t.dataset.act;
+  if(a==='usesoil'){S.plan.type=classify()[0];save();view='plan';render();scrollTo(0,0);toast('Plan updated')}
+  if(a==='allpass'){draft.res=draft.res.map(r=>r||'pass');const y=scrollY;render();scrollTo(0,y)}
+  if(a==='clearsig'){draft.sig=null;sigPad()}
+  if(a==='saveinsp'){if(!draft.job.trim()||!draft.cp.trim()){toast('Add the job and competent person');return}
+    if(draft.res.some(r=>!r)){toast('Answer every checklist item');return}
+    draft.t=new Date().toISOString();if(draft.cap){const key=stKey(draft),st=S.stations[key];if(!st){const c=caps.get(draft.cap);S.stations[key]={ref:draft.cap,geo:c.geo,pitch:c.pitch,roll:c.roll,heading:c.heading,pin:c.pin,w:c.w,h:c.h,box:draft.sys==='Trench box'}}}S.log.unshift(draft);const f=draft.res.filter(r=>r==='fail').length;draft=null;save();openLog=0;view='log';render();scrollTo(0,0);toast(f?'Saved with problems flagged':'Inspection saved')}
+  if(a==='fresh'){S=blank();started=true;await save();await store.put('kv',{k:'tc-started',v:1});view='plan';render()}
+  if(a==='sample'){$('#view').innerHTML='<div class="loading" style="min-height:40vh;display:grid;place-items:center">Setting up the sample…</div>';S=sample();await seedPhotos();started=true;await save();await store.put('kv',{k:'tc-started',v:1});view='log';openLog=0;render()}
+  if(a==='wipe'){if(t.textContent!=='Tap again to erase everything'){t.textContent='Tap again to erase everything';return}for(const c of caps.values())await store.del('caps',c.id);caps.clear();await store.del('kv','tc-state');await store.del('kv','tc-started');S=blank();started=false;draft=null;render()}
+  if(a==='photo')trenchPhoto();
+  if(a==='slopestart')slopeStart();
+  if(a==='slopestop')slopeStop();
+  if(a==='slopeuse'){const d=slope.lock??slope.deg;if(d==null)return;const rise=S.plan.depth||S.plan.rise||1;S.plan.rise=rise;S.plan.run=+(rise*SL.Incline.ratio(d)).toFixed(2);await save();render();toast(`Cut check set from ${d.toFixed(1)}° over the full ${ft(rise)} depth`)}
+});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.k&&draft){draft[t.dataset.k]=t.value}
+});
+document.addEventListener('change',e=>{const t=e.target;
+  if(t.dataset.f){const v=parseFloat(t.value);if(v>=0){S.plan[t.dataset.f]=v;save();render()}}
+  if(t.id==='pshort'){S.plan.short=t.checked;save();render()}
+  if(t.dataset.s){S.soilIn[t.dataset.s]=t.type==='checkbox'?t.checked:t.dataset.s==='qu'?parseFloat(t.value)||0:t.value;save();render()}
+  if(t.dataset.k&&draft){draft[t.dataset.k]=t.value}
+});
+document.addEventListener('input',e=>{if(e.target.id==='slsim'){slope.noSensor=true;slope.deg=+e.target.value;slope.lock=null;paintSlope()}});
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!/claude/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+(async()=>{await store.open();const st=await store.get('kv','tc-state');started=!!(await store.get('kv','tc-started'));S=st?st.v:blank();S.stations=S.stations||{};caps=new Map((await store.all('caps')).filter(c=>c.app==='trenchcheck').map(c=>[c.id,c]));
+  const h=location.hash.slice(1);if(['plan','soil','inspect','log'].includes(h))view=h;render()})();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b2a6b">
+<title>Crack Watch</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: precise, calm field instrument; a homeowner can run it, an engineer can trust it
+   IDEA: a surveyor's monitoring point: same spot, same angle, same card, every visit
+   PICTURE: the spot's latest photo with its grid, pinned cell and the measured gauge line
+   COLOUR and TYPE: blue-to-black fade, white ground, red only for growth; Manrope
+   LAYOUT: one app column, bottom tabs, full-screen camera from the SiteLock kit */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#05080f);--card:light-dark(#f3f6fb,#0e1625);--ink:light-dark(#0b1424,#e9f0fb);--mute:light-dark(#53627a,#93a3bc);--line:light-dark(#dbe3ef,#1d2a40);--blue:#2f7bff;--ok:#119d91;--watch:#f06a2a;--bad:#e5293e}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Manrope,system-ui,sans-serif;overflow-x:clip}
+header{background:linear-gradient(160deg,#1f5fe0 0%,#0b2a6b 45%,#03060c 100%);color:#fff;padding:20px max(5vw,16px) 22px}
+header .in,main{max-width:760px;margin:0 auto}
+header small{opacity:.78;font-size:13px}
+h1{font-size:34px;line-height:1.05;margin:4px 0 2px;font-weight:800;text-wrap:balance}
+h2{font-size:22px;line-height:1.15;margin:0 0 4px;font-weight:800}
+main{padding:16px max(4vw,14px) 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.mute{color:var(--mute);font-size:14px}
+.pill{display:inline-block;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700;color:#fff;white-space:nowrap}
+.big{font-size:clamp(30px,8vw,44px);font-weight:800;line-height:1;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.stats div{background:var(--bg);border-radius:14px;padding:10px}.stats b{display:block;font-size:19px;white-space:nowrap}.stats span{font-size:13px;color:var(--mute)}
+button,.btn{font:600 16px Manrope,system-ui,sans-serif;min-height:44px;padding:10px 16px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.pri{background:var(--blue)!important;border-color:var(--blue)!important;color:#fff!important}
+button.ghost{background:none;border:0;color:var(--blue);padding:10px 6px}
+button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+input,select,textarea{font:16px Manrope,system-ui,sans-serif;width:100%;min-height:44px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+.spot{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;font-weight:400;cursor:pointer}
+.thumb{width:96px;height:72px;object-fit:cover;border-radius:12px;background:#111;display:block}
+.hero{position:relative;border-radius:16px;overflow:hidden;background:#111}
+.hero canvas{display:block;width:100%;height:auto}
+.fig{position:relative;min-height:200px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px;margin:10px 0 0}.facts dt{color:var(--mute)}.facts dd{margin:0;overflow-wrap:anywhere}
+.visit{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.visit img{width:64px;height:48px;object-fit:cover;border-radius:8px}
+.stage{overflow:auto;border-radius:16px;background:#111;max-height:64vh;touch-action:pan-x pan-y}
+.stage canvas{display:block;width:100%;max-width:none;cursor:crosshair;touch-action:none}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}.seg button{padding:8px 4px;font-size:14px}
+.badge{display:inline-flex;gap:6px;align-items:center;border-radius:10px;padding:4px 10px;font-size:13px;font-weight:700;background:var(--bg);border:1px solid var(--line)}
+.badge.ok{background:#0e7c5f;color:#fff;border-color:#0e7c5f}
+.cardsvg{background:#fff;border-radius:12px;padding:8px}.cardsvg svg{width:100%;height:auto;display:block}
+.tags{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}.tags div{background:#fff;border-radius:10px;padding:6px}.tags svg{width:100%;height:auto;display:block}
+nav{position:fixed;left:0;right:0;bottom:0;background:light-dark(rgba(255,255,255,.94),rgba(5,8,15,.94));backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav .in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+nav button{border:0;background:none;border-radius:0;font-size:13px;padding:12px 2px;color:var(--mute);min-height:56px}
+nav button[aria-current=true]{color:var(--blue);box-shadow:inset 0 3px 0 var(--blue);background:none}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}.scrim.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#0b1424;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:1100;max-width:90vw}#toast.on{opacity:1}
+.loading{display:grid;place-items:center;min-height:40vh;text-align:center;color:var(--mute)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+@media(max-width:480px){.spot{grid-template-columns:80px minmax(0,1fr) auto}.thumb{width:80px;height:60px}}
+</style>
+</head>
+<body>
+<header><div class="in"><small>LyfEscapes · works alone or with your other field apps</small><h1>Crack Watch</h1><small>Photos and readings stay on this phone.</small></div></header>
+<main id="view"><div class="loading">Setting up the sample spots…</div></main>
+<nav><div class="in" id="tabs"><button data-v="spots">Spots</button><button data-v="scan">Scan</button><button data-v="compare">Compare</button><button data-v="card">Card</button><button data-v="share">Share</button></div></nav>
+<div class="scrim" id="scrim"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+<script src="vendor/cv.js"></script>
+<script src="vendor/aruco.js"></script>
+<script src="sitelock.js"></script>
+<script>
+{
+const SL=window.SiteLock, APP='crackwatch', store=new SL.Store(APP);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtD=t=>new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+const fmtS=t=>new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+const mm=v=>v==null?'–':(v<1?v.toFixed(2):v.toFixed(1))+' mm';
+const ST={ok:['Stable','var(--ok)'],watch:['Watch','var(--watch)'],bad:['Growing','var(--bad)']};
+const OTHER=[['drainkeeper','Drain Keeper'],['trenchcheck','Trench Check'],['digclear','DigClear'],['cylinderchain','Cylinder Chain'],['corefield','CoreField']];
+const SAMPLE_GEO={lat:35.000214,lon:-81.000331,acc:4};
+const SCENE={'s-basement':{seed:11,dir:'v',block:true,serial:3,cx:260,cy:560},'s-garage':{seed:23,dir:'h',serial:4,cx:320,cy:560,tone:[176,174,168]},'s-hall':{seed:31,dir:'v',serial:5,cx:260,cy:560,tone:[226,222,214]}};
+let spots=[],caps=new Map(),view='spots',sel=null,cmp=null,meas=null;
+const imgCache=new Map();
+const getImg=async id=>{if(imgCache.has(id))return imgCache.get(id);const c=caps.get(id);if(!c)return null;const im=await SL.img(c.img);imgCache.set(id,im);return im};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600)}
+function copy(t,m){try{navigator.clipboard.writeText(t).then(()=>toast(m),()=>toast('Copy was blocked here'))}catch(e){toast('Copy was blocked here')}}
+function sheet(html,mount){const sh=$('#sheet');sh.onclick=null;sh.innerHTML=html;$('#scrim').classList.add('on');mount&&mount(sh)}
+const closeSheet=()=>$('#scrim').classList.remove('on');
+$('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeSheet()});
+
+/* ---------- sample scenes (stand-ins for real photos) ---------- */
+const WW=1440,WH=1080,PX=6; // world canvas at 6 px per mm
+async function world(o){
+  const c=document.createElement('canvas');c.width=WW;c.height=WH;const x=c.getContext('2d');let s=o.seed;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+  const base=o.tone||[161,157,150];x.fillStyle=`rgb(${base})`;x.fillRect(0,0,WW,WH);
+  if(o.block){x.fillStyle='rgba(0,0,0,.18)';for(let y=60;y<WH;y+=240){x.fillRect(0,y,WW,14);for(let k=((y/240)|0)%2?240:0;k<WW;k+=480)x.fillRect(k,y,14,240)}}
+  for(let i=0;i<10000;i++){const v=base[0]-50+rnd()*100|0;x.fillStyle=`rgba(${v},${v-3},${v-8},${.25+rnd()*.4})`;x.fillRect(rnd()*WW,rnd()*WH,1+rnd()*4,1+rnd()*4)}
+  for(let i=0;i<140;i++){x.fillStyle='rgba(40,38,35,.55)';x.beginPath();x.arc(rnd()*WW,rnd()*WH,1+rnd()*5,0,7);x.fill()}
+  let s2=o.seed*3+1;const r2=()=>(s2=(s2*16807)%2147483647)/2147483647;const P=[];
+  if(o.dir==='h'){let cx=-10,cy=300;P.push([cx,cy]);while(cx<WW+10){cx+=26+r2()*24;cy+=(r2()-.5)*40;P.push([cx,cy])}}else{let cx=820,cy=-10;P.push([cx,cy]);while(cy<WH+10){cx+=(r2()-.42)*50;cy+=26+r2()*24;P.push([cx,cy])}}
+  x.lineCap='round';x.lineJoin='round';x.strokeStyle='rgba(45,40,36,.45)';x.lineWidth=o.w*PX+5;x.beginPath();P.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.stroke();
+  x.strokeStyle='#14110f';x.lineWidth=o.w*PX;x.beginPath();P.forEach((p,i)=>i?x.lineTo(...p):x.moveTo(...p));x.stroke();
+  const im=await SL.img('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(SL.Card.svg(o.serial,'CRACK WATCH')));
+  x.save();x.shadowColor='rgba(0,0,0,.35)';x.shadowBlur=14;x.shadowOffsetY=5;x.drawImage(im,o.cx,o.cy,85.6*PX,54*PX);x.restore();
+  return{c,P};
+}
+function shoot(w,t){const c=document.createElement('canvas');c.width=1200;c.height=900;const g=c.getContext('2d');g.fillStyle='#222';g.fillRect(0,0,1200,900);g.save();g.translate(600+t.dx*1200,450+t.dy*1200);g.rotate(t.rot*Math.PI/180);g.scale(t.scale,t.scale);g.translate(-WW/2,-WH/2);g.drawImage(w,0,0);g.restore();return c}
+const toCap=(t,p)=>{const x=p[0]-WW/2,y=p[1]-WH/2,c=Math.cos(t.rot*Math.PI/180)*t.scale,s=Math.sin(t.rot*Math.PI/180)*t.scale;return[600+c*x-s*y+t.dx*1200,450+s*x+c*y+t.dy*1200]};
+function gauge(P,w,dir,at){ // endpoints across the crack (world px) near position `at`
+  for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i];const k=dir==='h'?0:1;if((a[k]-at)*(b[k]-at)<=0){const f=(at-a[k])/((b[k]-a[k])||1),cx=a[0]+(b[0]-a[0])*f,cy=a[1]+(b[1]-a[1])*f,tx=b[0]-a[0],ty=b[1]-a[1],L=Math.hypot(tx,ty),nx=-ty/L,ny=tx/L,h=w*PX/2;return[[cx-nx*h,cy-ny*h],[cx+nx*h,cy+ny*h]]}}return null}
+async function seed(){
+  let r=7;const rnd=()=>(r=(r*16807)%2147483647)/2147483647;const now=Date.now();
+  const defs=[{id:'s-basement',name:'Basement north wall',loc:'Basement, north wall, 6 ft from the NE corner',type:'Stair-step',mat:'Concrete block',thr:1,o:SCENE['s-basement'],ws:[1.2,1.5,1.9,2.3,2.7],days:[182,121,90,45,3],notes:['Baseline. Card taped in place, pencil marks at both ends','','After a week of heavy rain','','Hairline branch starting at the top']},
+    {id:'s-garage',name:'Garage slab',loc:'Garage floor, center, runs east to west',type:'Straight',mat:'Concrete slab',thr:1,o:SCENE['s-garage'],ws:[.4,.45,.4],days:[170,80,6],notes:['Baseline','','']},
+    {id:'s-hall',name:'Hallway over door',loc:'Upstairs hall, above bedroom 2 door',type:'Diagonal',mat:'Drywall',thr:.5,o:SCENE['s-hall'],ws:[.6,.9],days:[140,20],notes:['Baseline','Paint cracking along it']}];
+  for(const d of defs){
+    const spot={id:d.id,app:APP,name:d.name,loc:d.loc,type:d.type,mat:d.mat,thr:d.thr,created:new Date(now-d.days[0]*864e5).toISOString(),readings:[],links:d.id==='s-basement'?[{app:'corefield',id:'JOB-2611-014',label:'CoreField moisture inspection'}]:[],sample:true};
+    let refCard=null;
+    for(let i=0;i<d.ws.length;i++){
+      const W=await world({...d.o,w:d.ws[i]}),t=i?{dx:(rnd()-.5)*.06,dy:(rnd()-.5)*.06,rot:(rnd()-.5)*7,scale:1+(rnd()-.5)*.1}:SL.T.id();
+      const shot=shoot(W.c,t),det=SL.Card.detect(shot,1400),card=det&&det.card?{serial:det.card.serial,markers:det.card.markers,H:det.card.H,tilt:det.card.tilt,quad:det.card.quad,mmPerPx:det.card.mmPerPx}:null;
+      const id=d.id+'-'+i,t0=new Date(now-d.days[i]*864e5+i*3600e3).toISOString();
+      const g=gauge(W.P,d.ws[i],d.o.dir,d.o.dir==='h'?760:330),pts=g?g.map(p=>toCap(t,p)):null;
+      const cap={id,spot:spot.id,app:APP,t:t0,img:shot.toDataURL('image/jpeg',.84),w:1200,h:900,geo:{...SAMPLE_GEO,lat:SAMPLE_GEO.lat+(rnd()-.5)*2e-5,lon:SAMPLE_GEO.lon+(rnd()-.5)*2e-5,acc:3+rnd()*4},pitch:88+rnd()*3,roll:(rnd()-.5)*3,heading:24+rnd()*6,card,how:i?'auto':'manual',pin:null};
+      if(!i&&pts){const px=(pts[0][0]+pts[1][0])/2/1200,py=(pts[0][1]+pts[1][1])/2/900;cap.pin={x:px,y:py,cell:SL.Grid.label(px,py)}}
+      if(i===0){refCard=card;spot.ref=id;spot.pin=cap.pin;spot.geo=cap.geo;spot.pitch=cap.pitch;spot.roll=cap.roll;spot.heading=cap.heading;spot.serial=card?.serial}
+      else if(refCard&&card){const H=SL.Align.fromCards(refCard.H,card.H);cap.align={H,t:SL.T.fromH(H,1200,900),method:'card',q:.95}}
+      const w=pts&&card?SL.Card.mm(card.H,pts[0],pts[1]):d.ws[i];
+      spot.readings.push({t:t0,w:+w.toFixed(2),cap:id,pts,mmPts:pts&&card?pts.map(p=>SL.H.apply(card.H,p)):null,note:d.notes[i]||''});
+      await store.put('caps',cap);
+    }
+    await store.put('spots',spot);
+  }
+  await store.put('kv',{k:'cw-seeded',v:1});
+}
+let started=false;
+async function load(){await store.open();started=!!(await store.get('kv','cw-seeded'))||!!(await store.get('kv','cw-started'));spots=(await store.all('spots')).filter(s=>s.app===APP);caps=new Map((await store.all('caps')).filter(c=>c.app===APP).map(c=>[c.id,c]));sel=sel||spots[0]?.id}
+
+/* ---------- stats & helpers ---------- */
+function stats(s){const R=[...s.readings].sort((a,b)=>a.t<b.t?-1:1);if(!R.length)return{R,ch:0,rate:0,st:'ok'};const f=R[0],l=R[R.length-1],ch=l.w-f.w,days=(new Date(l.t)-new Date(f.t))/864e5;return{R,f,l,ch,rate:days>0?ch/(days/30.44):0,st:ch>=s.thr?'bad':ch>=s.thr/2?'watch':'ok'}}
+const pill=st=>`<span class="pill" style="background:${ST[st][1]}">${ST[st][0]}</span>`;
+const cur=()=>spots.find(s=>s.id===sel)||spots[0];
+const capsOf=s=>[...caps.values()].filter(c=>c.spot===s.id).sort((a,b)=>a.t<b.t?-1:1);
+const I3=[1,0,0,0,1,0,0,0,1];
+const Href=c=>c.align?.H||I3; // ref px -> this capture px
+function transfer(fromCap,toCap,pts,mmPts){ // move a gauge from one visit to another: card mm when both have the card, else via alignment
+  if(mmPts&&toCap.card){const Hi=SL.H.inv(toCap.card.H);if(Hi)return mmPts.map(p=>SL.H.apply(Hi,p))}
+  if(!pts)return null;const A=SL.H.inv(Href(fromCap));if(!A)return null;const M=SL.H.mul(Href(toCap),A);return pts.map(p=>SL.H.apply(M,p));
+}
+function niceStep(max){for(const s of[.1,.25,.5,1,2,5,10])if(max/s<=5)return s;return 20}
+function drawChart(svg,s){const W=svg.clientWidth,H=svg.clientHeight;if(!W||!H)return;const{R,f}=stats(s);if(!R.length){svg.innerHTML='';return}
+  const small=W<520,pl=small?34:42,pr=14,pt=18,pb=28,t0=+new Date(R[0].t),t1=Math.max(+new Date(R[R.length-1].t),t0+864e5),al=f.w+s.thr,ym=Math.max(al,...R.map(r=>r.w))*1.2;
+  const x=t=>pl+(t-t0)/(t1-t0)*(W-pl-pr),y=v=>H-pb-v/ym*(H-pt-pb),st=niceStep(ym);let g='';
+  for(let v=0;v<=ym+1e-9;v+=st)g+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="12" fill="var(--mute)">${+v.toFixed(2)}</text>`;
+  const pts=R.map(r=>[x(+new Date(r.t)),y(r.w)]),col=ST[stats(s).st][1];
+  svg.innerHTML=`${g}<line x1="${pl}" x2="${W-pr}" y1="${y(al)}" y2="${y(al)}" stroke="var(--bad)" stroke-dasharray="6 5" stroke-width="1.5"/><text x="${pl+6}" y="${y(al)-6}" font-size="12" font-weight="700" fill="var(--bad)">Alert at ${mm(al)}</text><polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round"/>${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="var(--bg)" stroke="${col}" stroke-width="2.5"/>`).join('')}<text x="${pl}" y="${H-8}" font-size="12" fill="var(--mute)">${fmtS(t0)}</text><text x="${W-pr}" y="${H-8}" text-anchor="end" font-size="12" fill="var(--mute)">${fmtS(t1)}</text>`}
+async function paintHero(cv,cap,reading){ // photo + grid + pin + gauge
+  const im=await getImg(cap.id);if(!im)return;cv.width=im.naturalWidth;cv.height=im.naturalHeight;const g=cv.getContext('2d');g.drawImage(im,0,0);
+  const s=spots.find(x=>x.id===cap.spot),refCap=caps.get(s?.ref);let pin=null;
+  if(s?.pin&&refCap){const p=SL.H.apply(Href(cap),[s.pin.x*refCap.w,s.pin.y*refCap.h]);pin={x:p[0]/cap.w,y:p[1]/cap.h}}
+  SL.Grid.draw(g,0,0,cv.width,cv.height,{pin});
+  if(cap.card){g.strokeStyle='#19c37d';g.lineWidth=3;g.beginPath();cap.card.quad.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.stroke()}
+  if(reading?.pts){const[a,b]=reading.pts;g.strokeStyle='#ffd60a';g.lineWidth=4;g.beginPath();g.moveTo(...a);g.lineTo(...b);g.stroke();[a,b].forEach(p=>{g.beginPath();g.arc(p[0],p[1],7,0,7);g.stroke()});g.font=`800 ${Math.round(cv.width/20)}px Manrope,sans-serif`;g.fillStyle='#ffd60a';g.shadowColor='#000';g.shadowBlur=8;g.fillText(mm(reading.w),Math.max(a[0],b[0])+14,(a[1]+b[1])/2+10)}
+}
+
+/* ---------- views ---------- */
+function vSpots(){const s=cur();
+  const list=spots.map(k=>{const st=stats(k),c=caps.get(k.ref),last=capsOf(k).slice(-1)[0];return`<button class="card spot" data-sel="${k.id}" ${k.id===s?.id?'style="border-color:var(--blue)"':''}><img class="thumb" src="${(last||c)?.img||''}" alt=""><div><b>${esc(k.name)}</b><div class="mute">${esc(k.mat)} · cell ${k.pin?.cell||'–'} · ${capsOf(k).length} visits</div></div><div style="text-align:right"><div style="font-weight:800;font-size:19px">${mm(st.l?.w)}</div>${pill(st.st)}</div></button>`}).join('');
+  if(!s)return`<div class="row" style="margin-bottom:12px"><h2 class="sp">Your spots</h2><button class="pri" data-act="newspot">New spot</button></div><p class="mute">No spots yet.</p>`;
+  const st=stats(s),C=capsOf(s),last=C[C.length-1],lr=st.l;
+  return`<div class="row" style="margin-bottom:12px"><div class="sp"><h2>Your spots</h2><div class="mute">${spots.length} being watched</div></div><button class="pri" data-act="newspot">New spot</button></div>${list}
+  <section class="card"><div class="row"><div class="sp"><h2>${esc(s.name)}</h2><div class="mute">${esc(s.loc)}</div></div>${pill(st.st)}</div>
+  <div class="hero" style="margin-top:12px"><canvas id="hero" aria-label="Latest photo of ${esc(s.name)} with grid and measurement"></canvas></div>
+  <div class="row" style="margin-top:10px"><button class="pri" data-act="return">Return visit</button><button data-act="measure" data-cap="${last?.id}">Measure</button><button data-act="cmp">Compare</button></div>
+  <div class="fig" style="margin-top:12px"><svg data-chart="${s.id}" role="img" aria-label="Crack width over time"></svg></div>
+  <div class="stats"><div><b>${mm(lr?.w)}</b><span>Latest width</span></div><div><b>${(st.ch>=0?'+':'')+st.ch.toFixed(1)} mm</b><span>Since first</span></div><div><b>${st.rate.toFixed(2)}</b><span>mm a month</span></div></div>
+  <dl class="facts"><dt>Grid cell</dt><dd>${s.pin?.cell||'Not pinned'}</dd><dt>GPS</dt><dd>${esc(SL.Geo.fmt(s.geo))}${s.sample?' (sample)':''}</dd><dt>Phone angle</dt><dd>${s.pitch!=null?`${s.pitch.toFixed(0)}° tilt, ${s.roll.toFixed(0)}° roll${s.heading!=null?`, facing ${SL.Geo.compass(s.heading)} (${s.heading.toFixed(0)}°)`:''}`:'Not recorded'}</dd><dt>Card</dt><dd>${s.serial!=null?'Card '+String(s.serial).padStart(3,'0')+', taped in place':'None'}</dd><dt>Alert</dt><dd>When it widens ${s.thr} mm past the first reading</dd></dl>
+  <h2 style="font-size:18px;margin:16px 0 4px">Visits</h2>${C.slice().reverse().map(c=>{const r=s.readings.find(x=>x.cap===c.id);return`<div class="visit"><img src="${c.img}" alt=""><div><b>${fmtD(c.t)}</b> · ${mm(r?.w)}<div class="mute">${c.id===s.ref?'Reference shot':c.align?`Matched by ${c.align.method==='card'?'card, exact':'wall texture'} · ${Math.round(c.align.q*100)}%`:'Not matched'}${r?.note?' · '+esc(r.note):''}</div></div><button class="ghost" data-act="measure" data-cap="${c.id}">Measure</button></div>`}).join('')}
+  <div class="row" style="margin-top:8px"><button class="ghost" data-act="edit">Edit spot</button><span class="sp"></span><button class="ghost" data-act="reset">Erase everything</button></div></section>`}
+function vScan(){return`<h2>Scan</h2><p class="mute" style="margin-top:0">Every spot keeps its GPS fix, compass heading, phone angle, grid cell and reference photo. On a return visit the camera shows the old photo as a ghost and captures on its own once everything lines up.</p>
+  <div class="card"><b>Return to a spot</b>${spots.map(s=>`<div class="visit" style="grid-template-columns:64px minmax(0,1fr) auto"><img src="${caps.get(s.ref)?.img||''}" alt=""><div><b>${esc(s.name)}</b><div class="mute">Cell ${s.pin?.cell||'–'} · last ${fmtD(stats(s).l?.t||s.created)}</div></div><button class="pri" data-act="return" data-spot="${s.id}">Go</button></div>`).join('')}</div>
+  <div class="card"><b>Start a new spot</b><p class="mute" style="margin:4px 0 10px">Tape the card flat beside the crack, frame it square, tap the grid on the crack, capture.</p><button class="pri" data-act="newspot">New spot</button></div>
+  <div class="card"><b>What the camera checks</b><ul style="margin:6px 0 0;padding-left:20px"><li>GPS distance and direction back to the spot</li><li>Phone tilt and roll against the first visit</li><li>Ghost or edge overlay of the reference photo</li><li>Live match score from the wall texture, made exact by the card's four markers</li><li>Card angle: how square you are to the wall</li><li>Flashlight in dark crawlspaces, and the same zoom as last time</li></ul></div>`}
+function vCompare(){const s=cur();if(!s)return'';const C=capsOf(s);if(C.length<2)return'<p>Needs two visits.</p>';cmp=cmp&&cmp.spot===s.id?cmp:{spot:s.id,a:C[0].id,b:C[C.length-1].id,mode:'swipe',grid:true};
+  const opt=v=>C.map(c=>`<option value="${c.id}" ${v===c.id?'selected':''}>${fmtD(c.t)}${c.id===s.ref?' (reference)':''}</option>`).join('');const cb=caps.get(cmp.b);
+  return`<h2>Compare visits</h2><div class="card"><label for="cs">Spot</label><select id="cs">${spots.map(k=>`<option value="${k.id}" ${k.id===s.id?'selected':''}>${esc(k.name)}</option>`).join('')}</select>
+  <div class="row" style="gap:10px"><div class="sp"><label for="ca">Before</label><select id="ca">${opt(cmp.a)}</select></div><div class="sp"><label for="cb">After</label><select id="cb">${opt(cmp.b)}</select></div></div>
+  <div class="seg" style="margin-top:12px">${[['swipe','Swipe'],['fade','Fade'],['flicker','Flicker'],['diff','Difference']].map(([k,l])=>`<button data-mode="${k}" aria-pressed="${cmp.mode===k}">${l}</button>`).join('')}</div>
+  <div id="cmpbox" style="margin-top:12px"><div class="loading" style="min-height:200px">Lining up…</div></div>
+  <div class="row" style="margin-top:8px"><span class="badge ${cb?.align?.method==='card'?'ok':''}">${cb?.align?`Aligned by ${cb.align.method==='card'?'card markers, exact':'wall texture, '+Math.round(cb.align.q*100)+'%'}`:'Reference vs reference'}</span><span class="sp"></span><button data-act="grid" aria-pressed="${cmp.grid}">Grid</button></div>
+  <p class="mute" style="margin-bottom:0">Swipe drags a divider. Flicker blinks between visits so growth jumps out. Difference lights up only what changed.</p></div>`}
+async function mountCompare(){const box=$('#cmpbox');if(!box||!cmp)return;const s=cur(),A=caps.get(cmp.a),B=caps.get(cmp.b);const[ia,ib]=await Promise.all([getImg(A.id),getImg(B.id)]);
+  const M=SL.H.mul(Href(B),SL.H.inv(Href(A))||I3),refCap=caps.get(s.ref);let pin=null;if(s.pin&&refCap){const p=SL.H.apply(Href(A),[s.pin.x*refCap.w,s.pin.y*refCap.h]);pin={x:p[0]/A.w,y:p[1]/A.h}}
+  cmp.api&&cmp.api.destroy();cmp.api=SL.Compare.mount(box,ia,ib,M,{mode:cmp.mode,grid:cmp.grid,pin})}
+function vCard(){const s=cur(),serial=s?.serial??3;return`<h2>Reference card and spot tags</h2><p class="mute" style="margin-top:0">The four corner markers give the camera exact scale and angle, so widths come out in true millimetres even when the photo isn't perfectly square.</p>
+  <div class="card"><div class="cardsvg">${SL.Card.svg(serial,'CRACK WATCH')}</div><ol style="padding-left:20px;margin:12px 0 0"><li>Print at 100%, then check the 50 mm bar with a ruler.</li><li>Tape it flat beside the crack and leave it there.</li><li>Each card has its own number, so the app knows which spot it's looking at.</li></ol><div class="row" style="margin-top:10px"><button data-act="copycard">Copy card file (SVG)</button></div></div>
+  <div class="card"><b>Spot tags</b><p class="mute" style="margin:4px 0 10px">Small stickers for places a card can't stay, like an outside wall. The camera recognises the tag and knows which spot it is.</p><div class="tags">${[201,202,203,204].map(i=>`<div>${SL.Card.tagSVG(i)}</div>`).join('')}</div><div class="row" style="margin-top:10px"><button data-act="copytags">Copy tag sheet (SVG)</button></div></div>`}
+function vShare(){const s=cur();if(!s)return'';const st=stats(s);
+  return`<h2>Share and connect</h2><div class="card"><label for="ss">Spot</label><select id="ss">${spots.map(k=>`<option value="${k.id}" ${k.id===s.id?'selected':''}>${esc(k.name)}</option>`).join('')}</select>
+  <p style="margin:12px 0">${st.f?`Widened <b>${st.ch.toFixed(1)} mm</b> between ${fmtD(st.f.t)} and ${fmtD(st.l.t)}, about <b>${st.rate.toFixed(2)} mm a month</b>.`:''}</p>
+  <div class="row"><button class="pri" data-act="copyrep">Copy report for an engineer</button><button data-act="copyrec">Copy Field Record</button></div></div>
+  <div class="card"><h2 style="font-size:18px">Linked records</h2><p class="mute" style="margin-top:0">Tie this spot to work in your other apps. Each app runs on its own; links just let them point at each other.</p>
+  ${(s.links||[]).map((l,i)=>`<div class="visit" style="grid-template-columns:minmax(0,1fr) auto"><div><b>${esc(OTHER.find(o=>o[0]===l.app)?.[1]||l.app)}</b> · ${esc(l.id)}<div class="mute">${esc(l.label)}</div></div><button class="ghost" data-unlink="${i}">Remove</button></div>`).join('')||'<p class="mute">No links yet.</p>'}
+  <div class="row" style="gap:10px;margin-top:8px"><div class="sp"><label for="la">App</label><select id="la">${OTHER.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div><div class="sp"><label for="li">Record ID</label><input id="li" placeholder="OUT-01"></div></div><label for="ll">What it is</label><input id="ll" placeholder="Headwall crack at the outfall"><div class="row" style="margin-top:10px"><button data-act="link">Add link</button></div>
+  <p class="mute" style="margin-bottom:0" id="found">Looking for records from your other apps on this device…</p></div>
+  <div class="card"><p class="mute" style="margin:0">Photos and readings stay on this phone. Copy a Field Record to back a spot up. <a href="privacy.html">Privacy</a></p></div>
+  <div class="card"><h2 style="font-size:18px">Bring in a Field Record</h2><p class="mute" style="margin-top:0">Paste a record copied from Crack Watch on another phone, or from another LyfEscapes app.</p><textarea id="imp" rows="3" placeholder='{"fieldRecord":1,…}'></textarea><div class="row" style="margin-top:8px"><button data-act="import">Import</button></div></div>`}
+
+/* ---------- measuring ---------- */
+async function openMeasure(capId,fresh){const cap=caps.get(capId);if(!cap)return;const s=spots.find(x=>x.id===cap.spot),im=await getImg(capId);
+  const R=[...s.readings].sort((a,b)=>a.t<b.t?-1:1),mine=R.find(r=>r.cap===capId),prev=R.filter(r=>r.cap!==capId&&r.t<=cap.t).pop()||R.filter(r=>r.cap!==capId).pop();
+  let pts=mine?.pts?.map(p=>[...p])||null,from='';
+  if(!pts&&prev){const pc=caps.get(prev.cap);if(pc){pts=transfer(pc,cap,prev.pts,prev.mmPts);if(pts)from=`Gauge placed where you measured on ${fmtS(prev.t)}. Nudge the ends onto the crack edges.`}}
+  meas={cap,s,im,pts:pts||[],ref:[],zoom:pts?3:1,drag:-1,from,fresh,note:mine?.note||''};view='measure';render();scrollTo(0,0);focusGauge()}
+function focusGauge(){const st=$('#mstage'),cv=$('#mcv');if(!st||!cv)return;const p=meas.pts.length===2?[(meas.pts[0][0]+meas.pts[1][0])/2,(meas.pts[0][1]+meas.pts[1][1])/2]:[cv.width/2,cv.height/2];st.scrollLeft=p[0]/cv.width*cv.clientWidth-st.clientWidth/2;st.scrollTop=p[1]/cv.height*cv.clientHeight-st.clientHeight/2}
+function measured(){const M=meas;if(M.pts.length<2)return null;if(M.cap.card)return SL.Card.mm(M.cap.card.H,M.pts[0],M.pts[1]);if(M.ref.length===2){const r=Math.hypot(M.ref[0][0]-M.ref[1][0],M.ref[0][1]-M.ref[1][1]);return r?Math.hypot(M.pts[0][0]-M.pts[1][0],M.pts[0][1]-M.pts[1][1])/r*50:null}return null}
+function vMeasure(){const M=meas,v=measured(),c=M.cap.card;
+  return`<div class="row" style="margin-bottom:8px"><button class="ghost" data-act="back">← ${esc(M.s.name)}</button></div><h2>Measure</h2>
+  <div class="row" style="margin:6px 0 10px">${c?`<span class="badge ok">Card ${String(c.serial).padStart(3,'0')} · scale locked · ${c.tilt.toFixed(0)}° off square, corrected</span>`:'<span class="badge">No card found: tap both ends of a 50 mm reference first</span>'}${M.cap.align?`<span class="badge">Matched ${M.cap.align.method==='card'?'by card':'by texture'} ${Math.round(M.cap.align.q*100)}%</span>`:''}</div>
+  ${M.from?`<p class="mute" style="margin-top:0">${M.from}</p>`:''}
+  <div class="stage" id="mstage"><canvas id="mcv" aria-label="Photo. Drag the yellow ends onto the crack edges"></canvas></div>
+  <div class="row" style="margin-top:8px"><button data-z="-1" aria-label="Zoom out">−</button><span class="mute">Zoom ${M.zoom}×</span><button data-z="1" aria-label="Zoom in">+</button><span class="sp"></span><button data-act="clearpts">Start over</button></div>
+  <div class="card" style="margin-top:12px"><div class="mute">Width</div><div class="big" id="mval">${v!=null?mm(v):'–'}</div><div class="mute" id="mhint">${M.pts.length<2?(c?'Tap the two edges of the crack':'Tap both ends of the 50 mm bar, then both crack edges'):'Drag either end to fine-tune. A loupe shows while you drag.'}</div>
+  <label for="mnote">Note</label><input id="mnote" value="${esc(M.note)}" placeholder="Water, offset, a new branch…"><div class="row" style="margin-top:12px"><button class="pri" data-act="savemeas">Save reading</button></div></div>`}
+function paintMeasure(){const M=meas,cv=$('#mcv');if(!cv)return;const im=M.im;cv.width=im.naturalWidth;cv.height=im.naturalHeight;cv.style.width=M.zoom*100+'%';const g=cv.getContext('2d');g.drawImage(im,0,0);
+  const k=cv.width/Math.max(1,cv.getBoundingClientRect().width);
+  if(M.cap.card){g.strokeStyle='#19c37d';g.lineWidth=2*k;g.beginPath();M.cap.card.quad.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.stroke()}
+  M.ref.forEach(p=>{g.strokeStyle='#2f7bff';g.lineWidth=2*k;g.beginPath();g.arc(p[0],p[1],8*k,0,7);g.stroke()});
+  if(M.pts.length){g.strokeStyle='#ffd60a';g.lineWidth=2.5*k;if(M.pts.length===2){g.beginPath();g.moveTo(...M.pts[0]);g.lineTo(...M.pts[1]);g.stroke()}M.pts.forEach(p=>{g.beginPath();g.arc(p[0],p[1],6*k,0,7);g.stroke();g.beginPath();g.arc(p[0],p[1],1.8*k,0,7);g.fillStyle='#ffd60a';g.fill()})}
+  if(M.drag>=0&&M.pts[M.drag]){const p=M.pts[M.drag],R=70*k,Z=4;g.save();g.beginPath();g.arc(R+12*k,R+12*k,R,0,7);g.clip();g.drawImage(im,p[0]-R/Z,p[1]-R/Z,2*R/Z,2*R/Z,12*k,12*k,2*R,2*R);g.restore();g.strokeStyle='#fff';g.lineWidth=3*k;g.beginPath();g.arc(R+12*k,R+12*k,R,0,7);g.stroke();g.strokeStyle='#ffd60a';g.lineWidth=1.5*k;g.beginPath();g.moveTo(R+12*k-10*k,R+12*k);g.lineTo(R+12*k+10*k,R+12*k);g.moveTo(R+12*k,R+12*k-10*k);g.lineTo(R+12*k,R+12*k+10*k);g.stroke()}
+  const v=measured();const e=$('#mval');if(e)e.textContent=v!=null?mm(v):'–'}
+function bindMeasure(){const cv=$('#mcv'),stg=$('#mstage');if(!cv)return;const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};let pan=null;
+  cv.addEventListener('pointerdown',e=>{const M=meas,p=pos(e),k=cv.width/cv.getBoundingClientRect().width;const i=M.pts.length<2?-1:M.pts.map((q,j)=>[Math.hypot(q[0]-p[0],q[1]-p[1]),j]).filter(a=>a[0]<28*k).sort((a,b)=>a[0]-b[0])[0]?.[1]??-1;try{cv.setPointerCapture(e.pointerId)}catch(x){}
+    if(i>=0){M.drag=i;e.preventDefault();paintMeasure();return}pan={x:e.clientX,y:e.clientY,sl:stg.scrollLeft,st:stg.scrollTop,moved:false}});
+  cv.addEventListener('pointermove',e=>{if(meas.drag>=0){meas.pts[meas.drag]=pos(e);paintMeasure();return}if(pan){const dx=e.clientX-pan.x,dy=e.clientY-pan.y;if(Math.hypot(dx,dy)>6)pan.moved=true;if(pan.moved){stg.scrollLeft=pan.sl-dx;stg.scrollTop=pan.st-dy}}});
+  const end=e=>{const M=meas;if(M.drag>=0){M.drag=-1;paintMeasure();return}if(pan&&!pan.moved&&e.type==='pointerup'){const p=pos(e);if(!M.cap.card&&M.ref.length<2)M.ref.push(p);else if(M.pts.length<2)M.pts.push(p);paintMeasure();const h=$('#mhint');if(h&&M.pts.length===2)h.textContent='Drag either end to fine-tune. A loupe shows while you drag.'}pan=null};
+  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end)}
+
+/* ---------- scanner hooks ---------- */
+let simCache={};
+async function simFor(s){ // stand-in "today" scene so the simulated camera has something real to look at
+  if(simCache[s.id])return simCache[s.id];const st=stats(s),o=SCENE[s.id]||{seed:97,dir:'v',serial:s.serial??6,cx:260,cy:560};
+  const W=await world({...o,w:(st.l?.w||1)+.25});return simCache[s.id]=shoot(W.c,SL.T.id());}
+async function startReturn(id){const s=spots.find(x=>x.id===id)||cur();if(!s)return;const rc=caps.get(s.ref);if(!rc){toast('This spot has no reference photo');return}
+  const sim=await simFor(s);
+  window.__cwScan=SL.Scanner.open({mode:'return',title:'Return to '+s.name,ref:{img:rc.img,w:rc.w,h:rc.h,card:rc.card,geo:s.geo,pitch:s.pitch,roll:s.roll,heading:s.heading,pin:s.pin,zoom:rc.zoom},sim:{img:sim,geo:s.geo},onDone:r=>r&&saveCapture(s,r)})}
+async function startNew(){const W=await world({seed:97+spots.length,dir:'v',serial:6+spots.length,cx:260,cy:560,w:.8,tone:[188,184,176]});
+  window.__cwScan=SL.Scanner.open({mode:'ref',title:'New spot',sim:{img:shoot(W.c,SL.T.id()),geo:{...SAMPLE_GEO,lat:SAMPLE_GEO.lat+.0003}},onDone:r=>r&&newSpotForm(r)})}
+async function saveCapture(s,r){const id=s.id+'-'+Date.now().toString(36);const cap={id,spot:s.id,app:APP,t:r.t,img:r.img,w:r.w,h:r.h,geo:r.geo,pitch:r.pitch,roll:r.roll,heading:r.heading,zoom:r.zoom,card:r.card,align:r.align||null,how:r.how,exif:r.exif};
+  caps.set(id,cap);await store.put('caps',cap);sel=s.id;toast(r.align?`Captured · matched ${r.align.method==='card'?'by card, exact':'by texture '+Math.round(r.align.q*100)+'%'}${r.align.cardMoved?' · card looks moved':''}`:'Captured');openMeasure(id,true)}
+function newSpotForm(r){const types=['Vertical','Horizontal','Diagonal','Stair-step','Straight','Map / spiderweb'],mats=['Poured concrete wall','Concrete block','Brick','Concrete slab','Drywall','Plaster','Stucco'];
+  sheet(`<h2>Name this spot</h2><p class="mute" style="margin-top:0">${r.card?`Card ${String(r.card.serial).padStart(3,'0')} found, ${r.card.tilt.toFixed(0)}° off square.`:'No card found in the photo. Widths will need a manual reference.'} ${r.pin?`Pinned at ${r.pin.cell}.`:''} ${r.geo?'GPS '+SL.Geo.fmt(r.geo)+'.':'No GPS fix.'}</p>
+  <label for="fn">Name</label><input id="fn" placeholder="Basement east wall"><label for="fl">Where exactly</label><input id="fl" placeholder="3 ft left of the window">
+  <label for="ft">Pattern</label><select id="ft">${types.map(t=>`<option>${t}</option>`).join('')}</select><label for="fm">Material</label><select id="fm">${mats.map(t=>`<option>${t}</option>`).join('')}</select>
+  <label for="fa">Alert me when it widens by</label><select id="fa">${[.25,.5,1,2].map(t=>`<option value="${t}" ${t===1?'selected':''}>${t} mm</option>`).join('')}</select>
+  <div class="row" style="margin-top:16px"><button class="pri" id="fs">Save and measure</button><button id="fc">Discard</button></div>`,el=>{
+    el.querySelector('#fc').onclick=closeSheet;el.querySelector('#fs').onclick=async()=>{const name=el.querySelector('#fn').value.trim();if(!name){toast('Give it a name');return}
+      const sid='s-'+Date.now().toString(36),cid=sid+'-0';const cap={id:cid,spot:sid,app:APP,t:r.t,img:r.img,w:r.w,h:r.h,geo:r.geo,pitch:r.pitch,roll:r.roll,heading:r.heading,zoom:r.zoom,card:r.card,how:r.how,pin:r.pin,exif:r.exif};
+      const s={id:sid,app:APP,name,loc:el.querySelector('#fl').value.trim(),type:el.querySelector('#ft').value,mat:el.querySelector('#fm').value,thr:+el.querySelector('#fa').value,created:r.t,ref:cid,pin:r.pin||{x:.5,y:.5,cell:'D4'},geo:r.geo,pitch:r.pitch,roll:r.roll,heading:r.heading,serial:r.card?.serial,readings:[],links:[]};
+      caps.set(cid,cap);spots.push(s);await store.put('caps',cap);await store.put('spots',s);sel=sid;closeSheet();openMeasure(cid,true)}})}
+
+/* ---------- render ---------- */
+let ros=[];
+async function render(){
+  const v=$('#view');if(!started){v.innerHTML=`<div style="display:grid;gap:12px;padding:8px 0"><h2>Welcome to Crack Watch</h2><p style="margin:0">Track foundation and wall cracks the way an engineer would: the same spot, the same angle and a reference card every time, so you can see whether a crack is growing.</p><button class="pri" data-act="fresh">Start my first spot</button><button data-act="sample">Explore with sample spots</button><p class="mute">Everything stays on this phone. <a href="privacy.html">Privacy</a></p></div>`;document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current','false'));return}
+  v.innerHTML=view==='spots'?vSpots():view==='scan'?vScan():view==='compare'?vCompare():view==='card'?vCard():view==='share'?vShare():view==='measure'?vMeasure():'';
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===view||(view==='measure'&&b.dataset.v==='spots')));
+  ros.forEach(r=>r.disconnect());ros=[];document.querySelectorAll('svg[data-chart]').forEach(svg=>{const s=spots.find(k=>k.id===svg.dataset.chart);const ro=new ResizeObserver(()=>drawChart(svg,s));ro.observe(svg);ros.push(ro)});
+  const s=cur();if(view==='spots'&&s){const C=capsOf(s),last=C[C.length-1];if(last)paintHero($('#hero'),last,s.readings.find(r=>r.cap===last.id))}
+  if(view==='compare')mountCompare();
+  if(view==='measure'){paintMeasure();bindMeasure()}
+  if(view==='share')findOthers();
+  try{history.replaceState(null,'',view==='spots'&&s?'#spot-'+s.id.replace(/[^A-Za-z0-9-]/g,''):'#'+view)}catch(e){}
+}
+async function findOthers(){const all=(await store.all('spots')).filter(x=>x.app!==APP),e=$('#found');if(!e)return;e.textContent=all.length?`${all.length} record${all.length>1?'s':''} from other apps found on this device: ${all.slice(0,4).map(x=>x.name||x.id).join(', ')}`:'No other LyfEscapes apps on this device yet. Once they share a web address or install, their records show up here.'}
+function reportText(s){const st=stats(s);return`CRACK WATCH REPORT\n${s.name}: ${s.loc}\n${s.type} crack, ${s.mat}\nGrid cell ${s.pin?.cell||'n/a'} · GPS ${SL.Geo.fmt(s.geo)}\nReadings ${st.R.length}, ${st.f?fmtD(st.f.t):''} to ${st.l?fmtD(st.l.t):''}\nLatest ${mm(st.l?.w)} · change ${st.ch>=0?'+':''}${st.ch.toFixed(2)} mm (${st.rate.toFixed(2)} mm/month) · ${ST[st.st][0]}\n\n${st.R.map(r=>{const c=caps.get(r.cap);return`${r.t.slice(0,10)}  ${r.w.toFixed(2)} mm  ${c?.align?'matched '+c.align.method+' '+Math.round(c.align.q*100)+'%':c?.id===s.ref?'reference':''}  ${r.note}`}).join('\n')}\n\nWidths measured against a marker reference card with perspective correction. Each visit is matched to the reference photo by position and angle. This is a record of change, not a structural evaluation.`}
+document.addEventListener('click',async e=>{const b=e.target.closest('button,[data-sel]');if(!b||b.closest('#sheet'))return;
+  if(b.dataset.v){if(!started)return;view=b.dataset.v;render();scrollTo(0,0);return}
+  if(b.dataset.sel){sel=b.dataset.sel;render();return}
+  if(b.dataset.mode){cmp.mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));cmp.api&&cmp.api.set('mode',cmp.mode);return}
+  if(b.dataset.z){meas.zoom=Math.min(4,Math.max(1,meas.zoom+ +b.dataset.z));render();focusGauge();return}
+  if(b.dataset.unlink!=null){const s=cur();s.links.splice(+b.dataset.unlink,1);await store.put('spots',s);render();return}
+  const a=b.dataset.act;
+  if(a==='fresh'){await store.put('kv',{k:'cw-started',v:1});started=true;view='scan';render();return}
+  if(a==='sample'){$('#view').innerHTML='<div class="loading">Setting up the sample spots…</div>';await seed();await load();started=true;view='spots';render();return}
+  if(!started&&!b.dataset.v)return;
+  if(a==='return')startReturn(b.dataset.spot||sel);
+  if(a==='newspot')startNew();
+  if(a==='measure'&&b.dataset.cap)openMeasure(b.dataset.cap);
+  if(a==='cmp'){view='compare';render();scrollTo(0,0)}
+  if(a==='grid'){cmp.grid=!cmp.grid;b.setAttribute('aria-pressed',cmp.grid);cmp.api&&cmp.api.set('grid',cmp.grid)}
+  if(a==='back'){view='spots';render()}
+  if(a==='clearpts'){meas.pts=[];meas.ref=[];meas.from='';render()}
+  if(a==='savemeas'){const v=measured();if(v==null){toast('Place both ends first');return}const M=meas,s=M.s;s.readings=s.readings.filter(r=>r.cap!==M.cap.id);
+    s.readings.push({t:M.cap.t,w:+v.toFixed(2),cap:M.cap.id,pts:M.pts.map(p=>[...p]),mmPts:M.cap.card?M.pts.map(p=>SL.H.apply(M.cap.card.H,p)):null,note:$('#mnote').value.trim()});await store.put('spots',s);
+    const st=stats(s);view='spots';sel=s.id;render();scrollTo(0,0);toast(st.st==='bad'?`Saved. ${s.name} is ${st.ch.toFixed(1)} mm wider than the first reading: past your alert`:`Saved ${mm(v)}`)}
+  if(a==='edit'){const s=cur();sheet(`<h2>Edit spot</h2><label for="en">Name</label><input id="en" value="${esc(s.name)}"><label for="el">Where exactly</label><input id="el" value="${esc(s.loc)}"><label for="ea">Alert me when it widens by</label><select id="ea">${[.25,.5,1,2].map(t=>`<option value="${t}" ${s.thr==t?'selected':''}>${t} mm</option>`).join('')}</select><div class="row" style="margin-top:16px"><button class="pri" id="es">Save</button><button id="ec">Cancel</button><span class="sp"></span><button id="ed" style="color:var(--bad)">Delete spot</button></div>`,el=>{
+    el.querySelector('#ec').onclick=closeSheet;el.querySelector('#es').onclick=async()=>{s.name=el.querySelector('#en').value.trim()||s.name;s.loc=el.querySelector('#el').value.trim();s.thr=+el.querySelector('#ea').value;await store.put('spots',s);closeSheet();render()};
+    const d=el.querySelector('#ed');d.onclick=async()=>{if(d.textContent!=='Tap again to delete'){d.textContent='Tap again to delete';return}for(const c of capsOf(s)){caps.delete(c.id);await store.del('caps',c.id)}await store.del('spots',s.id);spots=spots.filter(x=>x!==s);sel=spots[0]?.id;closeSheet();render()}})}
+  if(a==='copycard')copy(SL.Card.svg(cur()?.serial??3,'CRACK WATCH'),'Card file copied');
+  if(a==='copytags')copy(`<svg xmlns="http://www.w3.org/2000/svg" width="130mm" height="40mm" viewBox="0 0 130 40">${[201,202,203,204].map((i,k)=>SL.Card.tagSVG(i).replace('<svg ',`<svg x="${k*32+1}" y="1" `)).join('')}</svg>`,'Tag sheet copied');
+  if(a==='copyrep')copy(reportText(cur()),'Report copied');
+  if(a==='copyrec'){const s=cur();copy(SL.Record.pack(APP,s,capsOf(s)),'Field Record copied, with photos')}
+  if(a==='link'){const s=cur(),id=$('#li').value.trim();if(!id){toast('Add the record ID');return}s.links=s.links||[];s.links.push({app:$('#la').value,id,label:$('#ll').value.trim()});await store.put('spots',s);render();toast('Linked')}
+  if(a==='import'){try{const o=SL.Record.unpack($('#imp').value);if(o.app!==APP){toast(`That's a ${o.app} record. Linked instead.`);const s=cur();s.links.push({app:o.app,id:o.spot.id,label:o.spot.name||''});await store.put('spots',s);render();return}
+      const s=o.spot;s.id=s.id+'-i'+Date.now().toString(36).slice(-4);const map={};for(const c of o.caps||[]){const nid=s.id+'-'+c.id.split('-').pop();map[c.id]=nid;c.id=nid;c.spot=s.id;caps.set(nid,c);await store.put('caps',c)}s.ref=map[s.ref]||s.ref;s.readings.forEach(r=>r.cap=map[r.cap]||r.cap);s.app=APP;spots.push(s);await store.put('spots',s);sel=s.id;view='spots';render();toast('Imported '+s.name)}catch(err){toast('That isn\'t a Field Record')}}
+  if(a==='reset'){if(b.textContent!=='Tap again to reset'){b.textContent='Tap again to reset';return}for(const c of caps.values())await store.del('caps',c.id);for(const s of spots)await store.del('spots',s.id);await store.del('kv','cw-seeded');await store.del('kv','cw-started');caps.clear();spots=[];imgCache.clear();simCache={};sel=null;started=false;render()}
+});
+document.addEventListener('change',e=>{const t=e.target;if(t.closest('#sheet'))return;
+  if(t.id==='cs'||t.id==='ss'){sel=t.value;cmp=null;render()}
+  if(t.id==='ca'||t.id==='cb'){cmp[t.id==='ca'?'a':'b']=t.value;render()}
+});
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!/claude/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+(async()=>{try{await load()}catch(err){$('#view').innerHTML='<p>Could not set up the samples on this device.</p>';return}
+  const h=location.hash.slice(1);if(h.startsWith('spot-')){const id=h.slice(5);if(spots.some(s=>s.id===id))sel=id}else if(['scan','compare','card','share'].includes(h))view=h;render()})();
+}
+</script>
+</body>
+</html>

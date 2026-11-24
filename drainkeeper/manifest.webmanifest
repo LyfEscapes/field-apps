@@ -1,0 +1,35 @@
+{
+ "name": "Drain Keeper",
+ "short_name": "Drain Keeper",
+ "description": "Drainage inventory for HOAs and small towns: photo points, storm routes and board reports.",
+ "id": "./?app=drainkeeper",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#0b3a45",
+ "orientation": "portrait",
+ "categories": [
+  "productivity",
+  "utilities",
+  "business"
+ ],
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

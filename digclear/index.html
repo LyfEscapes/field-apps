@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1f2123">
+<title>DigClear</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=Archivo:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: dispatcher's board for a small excavation outfit: what can be dug today, what's about to lapse, and proof of every mark
+   IDEA: utility paint on asphalt. APWA colours appear only as utility marks; the app's own UI is asphalt, white and survey pink
+   PICTURE: each ticket's life drawn as a bar with today's pin; mark photos stamped with ticket, time and GPS
+   COLOUR and TYPE: asphalt #1f2123, white paint, survey pink #e0157a; Archivo Narrow + Archivo
+   LAYOUT: one app column, bottom tabs, ticket pages, full-screen SiteLock camera */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#141516);--card:light-dark(#f4f4f2,#202224);--ink:light-dark(#151617,#f1f1ef);--mute:light-dark(#5f6266,#a3a6aa);--line:light-dark(#e1e1de,#33363a);--pink:#e0157a;--asph:#1f2123}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
+header{background:var(--asph);color:#fff;padding:20px max(5vw,16px) 22px;background-image:repeating-linear-gradient(90deg,transparent 0 40px,rgba(255,255,255,.9) 40px 64px);background-size:100% 5px;background-repeat:no-repeat;background-position:bottom}
+header .in,main{max-width:720px;margin:0 auto}
+h1,h2,.big{font-family:"Archivo Narrow",Archivo,sans-serif;font-weight:700}
+h1{font-size:40px;line-height:1.02;margin:2px 0 4px}h2{font-size:24px;line-height:1.1;margin:0 0 6px}
+header small{font-size:14px;opacity:.8}
+main{padding:16px max(4vw,14px) 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.mute{color:var(--mute);font-size:14px}
+.big{font-size:clamp(30px,8.5vw,46px);line-height:1;white-space:nowrap}
+.counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.counts div{border-radius:14px;padding:10px;background:var(--card);border:1px solid var(--line)}.counts b{display:block;font:700 30px/1 "Archivo Narrow",sans-serif}.counts span{font-size:13px;color:var(--mute)}
+button,.btn{font:600 16px Archivo,system-ui,sans-serif;min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.pri{background:var(--ink)!important;color:var(--bg)!important;border-color:var(--ink)!important}
+button.ghost{background:none;border:0;color:var(--pink);padding:10px 4px}
+:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+input,select,textarea{font:16px Archivo,system-ui,sans-serif;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+.tk{display:block;width:100%;text-align:left;font-weight:400;cursor:pointer}
+.pill{display:inline-block;border-radius:99px;padding:3px 10px;font-size:13px;font-weight:700;white-space:nowrap;border:2px solid currentColor}
+.st-clear{background:var(--ink);color:var(--bg);border-color:var(--ink)}.st-wait{color:var(--mute)}.st-hold{background:var(--pink);color:#fff;border-color:var(--pink)}.st-soon{color:var(--pink)}.st-expired{color:var(--mute);text-decoration:line-through}
+.life{position:relative;height:30px;margin:14px 0 4px}.life .seg{position:absolute;top:8px;height:14px;border-radius:7px}
+.life .pin{position:absolute;top:0;width:3px;height:30px;background:var(--pink);border-radius:2px}.life .pin::after{content:"Today";position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:12px;font-weight:700;color:var(--pink);white-space:nowrap}
+.marks{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}.mk{width:18px;height:18px;border-radius:5px;border:2px solid transparent;display:inline-block;flex:none}
+.ut{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;padding:14px 0;border-top:1px solid var(--line);align-items:start}.ut:first-of-type{border-top:0}
+.chip{width:30px;height:30px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.seg4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;grid-column:1/-1}.seg4 button{padding:6px 2px;font-size:14px;min-height:40px}
+.seg4 button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg4 button[aria-pressed=true][data-st=problem],.seg4 button[aria-pressed=true][data-st=pending]{background:var(--pink);border-color:var(--pink);color:#fff}
+.photos{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.photos img{width:120px;height:80px;object-fit:cover;border-radius:8px;cursor:pointer}
+.banner{border-radius:14px;padding:12px 14px;font-weight:600;margin:0 0 14px}
+.act{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;padding:10px 0;border-top:1px solid var(--line)}.act:first-of-type{border-top:0}.act b{font-family:"Archivo Narrow",sans-serif;font-size:18px;white-space:nowrap}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.checks label{display:flex;gap:8px;align-items:center;font-weight:400;font-size:15px;margin:0;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}.checks input{width:20px;min-height:20px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}.seg button{padding:8px 4px;font-size:14px}.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px;margin:8px 0 0}.facts dt{color:var(--mute)}.facts dd{margin:0;overflow-wrap:anywhere}
+.welcome{display:grid;gap:12px;padding:8px 0}
+nav{position:fixed;left:0;right:0;bottom:0;background:light-dark(rgba(255,255,255,.95),rgba(20,21,22,.95));border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+nav button{border:0;border-radius:0;background:none;font-size:14px;min-height:56px;color:var(--mute)}
+nav button[aria-current=true]{color:var(--ink);box-shadow:inset 0 4px 0 var(--pink)}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}.scrim.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--asph);color:#fff;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:1100;max-width:90vw}#toast.on{opacity:1}
+.loading{display:grid;place-items:center;min-height:40vh;color:var(--mute)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+@media(max-width:420px){.counts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header><div class="in"><small>LyfEscapes · locate tickets for small contractors</small><h1>DigClear</h1><small>Timing follows your state's rules. Always confirm dates against the ticket from your one-call center.</small></div></header>
+<main id="view"><div class="loading">Loading…</div></main>
+<nav><div class="in" id="tabs"><button data-v="board">Board</button><button data-v="ticket">Ticket</button><button data-v="new">New</button><button data-v="rules">Rules</button></div></nav>
+<div class="scrim" id="scrim"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+<script src="vendor/cv.js"></script>
+<script src="vendor/aruco.js"></script>
+<script src="sitelock.js"></script>
+<script>
+{
+const SL=window.SiteLock,APP='digclear',store=new SL.Store(APP);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const UT={Electric:['#e3262b','Red'],Gas:['#f7d117','Yellow'],Telecom:['#f47c20','Orange'],'Cable / fiber':['#f47c20','Orange'],Water:['#1f6fd1','Blue'],Sewer:['#1e9a4b','Green'],'Reclaimed / irrigation':['#7b3fb0','Purple']};
+const STS=[['pending','No reply'],['marked','Marked'],['clear','Clear'],['problem','Problem']];
+const iso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+const day=d=>{const x=new Date(d);x.setHours(12,0,0,0);return x};
+const fmt=d=>new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+const fmtT=d=>new Date(d).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const TODAY=day(new Date());
+const PRESET={SC:{name:'South Carolina (SC811)',wait:3,life:15},custom:{name:'Custom'}};
+const SCHOL=['2026-11-26','2026-11-27','2026-12-24','2026-12-25','2027-01-01','2027-01-18','2027-02-15'];
+let set={state:'SC',wait:3,life:15,hol:SCHOL.slice()},tickets=[],caps=new Map(),sel=null,view='board',started=false,me=null,cmpApi=null;
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600)}
+function copy(t,m){try{navigator.clipboard.writeText(t).then(()=>toast(m),()=>toast('Copy was blocked here'))}catch(e){toast('Copy was blocked here')}}
+function sheet(html,mount){const sh=$('#sheet');sh.onclick=null;sh.innerHTML=html;$('#scrim').classList.add('on');mount&&mount(sh)}
+const closeSheet=()=>{$('#scrim').classList.remove('on');cmpApi&&cmpApi.destroy();cmpApi=null};
+$('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeSheet()});
+const saveT=t=>store.put('spots',t),saveSet=()=>store.put('kv',{k:'dc-set',v:set});
+
+/* ---------- working days ---------- */
+const isWork=d=>{const w=d.getDay();return w!==0&&w!==6&&!set.hol.includes(iso(d))};
+function addWork(from,n){const d=day(from);let c=0;while(c<n){d.setDate(d.getDate()+1);if(isWork(d))c++}return d}
+function subWork(from,n){const d=day(from);let c=0;while(c<n){d.setDate(d.getDate()-1);if(isWork(d))c++}return d}
+function workBetween(a,b){let d=day(a),c=0;const e=day(b);while(d<e){d.setDate(d.getDate()+1);if(isWork(d))c++}return c}
+function life(t){const start=addWork(t.entered,set.wait+1),thru=addWork(start,set.life-1),upd=subWork(thru,set.wait);
+  const waiting=t.utils.filter(x=>x.st==='pending'),prob=t.utils.filter(x=>x.st==='problem'),faded=t.utils.filter(x=>x.checks?.length&&x.checks[x.checks.length-1].visible===false);let st,why;
+  if(TODAY<start){st='wait';const n=workBetween(TODAY,start);why=`Dig opens ${fmt(start)}, ${n} working day${n>1?'s':''} away`}
+  else if(TODAY>thru){st='expired';why=`Expired after ${fmt(thru)}. Call in a new ticket before digging`}
+  else if(prob.length){st='hold';why=`Hold: ${prob.map(x=>x.u).join(', ')} flagged a problem`}
+  else if(waiting.length){st='hold';why=`Hold: no reply yet from ${waiting.map(x=>x.u).join(', ')}`}
+  else if(faded.length){st='hold';why=`Hold: ${faded.map(x=>x.u).join(', ')} marks no longer visible. Request a re-mark`}
+  else if(TODAY>=subWork(upd,2)){st='soon';why=TODAY>upd?`Clear, but it lapses ${fmt(thru)}. Too late for a seamless update`:`Clear to dig. Request an update by ${fmt(upd)}`}
+  else{st='clear';why=`Clear to dig through ${fmt(thru)}`}
+  return{start,thru,upd,st,why}}
+const LBL={clear:'Clear to dig',wait:'Waiting',hold:'Hold',soon:'Update soon',expired:'Expired'};
+const pill=st=>`<span class="pill st-${st}">${LBL[st]}</span>`;
+function lifeBar(t,L){const a=day(t.entered),b=new Date(L.thru);b.setDate(b.getDate()+1);const span=b-a,P=d=>Math.max(0,Math.min(100,(day(d)-a)/span*100));
+  return`<div class="life" aria-hidden="true"><div class="seg" style="left:0;width:${P(L.start)}%;background:var(--line)"></div><div class="seg" style="left:${P(L.start)}%;width:${P(L.upd)-P(L.start)}%;background:var(--ink)"></div><div class="seg" style="left:${P(L.upd)}%;width:${100-P(L.upd)}%;background:repeating-linear-gradient(135deg,var(--ink) 0 6px,var(--mute) 6px 12px)"></div>${TODAY>=a&&TODAY<=b?`<div class="pin" style="left:calc(${P(TODAY)}% - 1px)"></div>`:''}</div>
+  <div class="row mute" style="font-size:13px;justify-content:space-between"><span>Called ${fmt(t.entered)}</span><span>Opens ${fmt(L.start)}</span><span>Lapses ${fmt(L.thru)}</span></div>`}
+const marks=t=>`<div class="marks">${t.utils.map(x=>`<span class="mk" title="${esc(x.u)}" style="background:${x.st==='pending'?'transparent':UT[x.u][0]};border-color:${UT[x.u][0]}"></span>`).join('')}</div>`;
+const cur=()=>tickets.find(t=>t.id===sel)||tickets[0];
+const dist=t=>me&&t.geo?SL.Geo.dist(me,t.geo):null;
+
+/* ---------- sample scenes and data ---------- */
+async function markScene(u,seed,fade=1,ground='grass'){const c=document.createElement('canvas');c.width=1440;c.height=1080;const g=c.getContext('2d');let s=seed;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  if(ground==='grass'){g.fillStyle='#5f7d3c';g.fillRect(0,0,1440,1080);for(let i=0;i<16000;i++){const v=r();g.strokeStyle=`rgba(${40+v*70|0},${85+v*80|0},${30+v*30|0},.7)`;g.lineWidth=2;const x=r()*1440,y=r()*1080;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*8,y-6-r()*12);g.stroke()}}
+  else{g.fillStyle='#45484b';g.fillRect(0,0,1440,1080);for(let i=0;i<14000;i++){const v=50+r()*60|0;g.fillStyle=`rgb(${v},${v},${v+3})`;g.fillRect(r()*1440,r()*1080,2,2)}}
+  g.fillStyle='#b9b5ad';g.fillRect(0,820,1440,260);for(let i=0;i<3000;i++){const v=150+r()*60|0;g.fillStyle=`rgba(${v},${v},${v-6},.6)`;g.fillRect(r()*1440,820+r()*260,2,2)}
+  const col=UT[u][0];g.globalAlpha=.92*fade;g.strokeStyle=col;g.lineWidth=26;g.lineCap='round';let x=180,y=200;for(let i=0;i<7;i++){const nx=x+150+r()*40,ny=y+70+r()*40;if(r()>.15*(1-fade)+.1||fade>.8){g.beginPath();g.moveTo(x,y);g.lineTo(x+(nx-x)*.6,y+(ny-y)*.6);g.stroke()}x=nx;y=ny}
+  g.font='bold 120px Arial';g.fillStyle=col;g.fillText(u[0],1050,330);g.globalAlpha=1;
+  for(let i=0;i<3;i++){const fx=300+i*330,fy=260+i*150;g.strokeStyle='#ddd';g.lineWidth=5;g.beginPath();g.moveTo(fx,fy);g.lineTo(fx,fy-120);g.stroke();if(fade>.5||i<2){g.fillStyle=col;g.fillRect(fx,fy-120,70,50)}}
+  return c}
+function shoot(w,t){const c=document.createElement('canvas');c.width=1200;c.height=900;const g=c.getContext('2d');g.fillStyle='#222';g.fillRect(0,0,1200,900);g.save();g.translate(600+t.dx*1200,450+t.dy*1200);g.rotate(t.rot*Math.PI/180);g.scale(t.scale,t.scale);g.translate(-720,-540);g.drawImage(w,0,0);g.restore();return c}
+function stamp(canvas,t,u,geo,when){const W=canvas.width,H=canvas.height,g=canvas.getContext('2d'),bh=Math.max(70,H*.13),fs=Math.round(bh*.26);
+  g.fillStyle='rgba(20,21,22,.8)';g.fillRect(0,H-bh,W,bh);g.fillStyle=UT[u][0];g.fillRect(0,H-bh,12,bh);g.fillStyle='#fff';g.font=`700 ${fs}px Archivo,Arial,sans-serif`;g.fillText(`Ticket #${t.no} · ${u} marks`,24,H-bh+fs*1.2);
+  g.font=`400 ${Math.round(fs*.8)}px Archivo,Arial,sans-serif`;g.fillText(`${new Date(when).toLocaleString()} · ${geo?`${geo.lat.toFixed(6)}, ${geo.lon.toFixed(6)} ±${Math.round((geo.acc||0)*3.281)} ft`:'No GPS'}`,24,H-bh+fs*2.25);g.fillText(t.job,24,H-bh+fs*3.2);return canvas}
+async function seed(){const s0={state:'SC',wait:3,life:15,hol:SCHOL.slice()};set=s0;
+  const back=n=>{let d=new Date(TODAY),c=0;while(c<n){d.setDate(d.getDate()-1);if(isWork(d))c++}d.setHours(9+(n%7),15*(n%4),0,0);return d.toISOString()};
+  const no=e=>iso(e).slice(2).replace(/-/g,'')+String(1000+((e.length*7919+new Date(e).getDate()*131)%8999));
+  const G=(dx,dy)=>({lat:35.0021+dy*1e-5,lon:-81.0042+dx*1e-5,acc:4});
+  const mk=(n,job,addr,utils,white,notes,geo)=>{const e=back(n);return{id:'t'+n,app:APP,kind:'ticket',no:no(e),job,addr,entered:e,utils:utils.map(([u,st])=>({u,st,photos:[],checks:[]})),white,notes,issues:[],geo}};
+  tickets=[mk(1,'Oakdale Ln irrigation tie-in','118 Oakdale Ln, front yard, 40 ft from curb to house',[['Electric','pending'],['Gas','pending'],['Telecom','pending'],['Water','pending'],['Reclaimed / irrigation','pending']],true,'Homeowner wants it done before Friday.',G(10,5)),
+    mk(5,'Maple St sewer lateral','2210 Maple St, ROW in front, both sides of drive',[['Electric','marked'],['Gas','pending'],['Telecom','marked'],['Cable / fiber','clear'],['Water','marked'],['Sewer','marked']],true,'',G(80,-40)),
+    mk(6,'Hwy 9 sign foundations','Hwy 9 shoulder, mile 14.2 to 14.6, east side',[['Electric','marked'],['Gas','clear'],['Telecom','marked'],['Water','clear']],true,'Four 24 in augered holes.',G(400,300)),
+    mk(14,'Ridgeview HOA drain repair','Ridgeview Dr behind lots 22 to 26, along the ditch',[['Electric','clear'],['Gas','clear'],['Telecom','marked'],['Water','marked'],['Sewer','marked']],true,'Crew back Monday.',G(-120,60)),
+    mk(24,'Church St fence posts','45 Church St, rear property line',[['Electric','clear'],['Gas','clear'],['Telecom','clear']],false,'',G(200,-200))];
+  const mp=tickets[1];for(const[i,u]of[[0,'Electric'],[2,'Telecom'],[4,'Water']]){const w=await markScene(u,17+i,1,i===0?'grass':'asphalt');const when=new Date(new Date(mp.entered).getTime()+3*864e5+i*600e3).toISOString(),geo={...mp.geo,lat:mp.geo.lat+i*2e-6,acc:5};
+    const c=stamp(shoot(w,SL.T.id()),mp,u,geo,when),id=`${mp.id}-${u.replace(/\W/g,'')}-0`;const cap={id,spot:mp.id,app:APP,t:when,img:c.toDataURL('image/jpeg',.8),w:1200,h:900,geo,pitch:35,roll:1,heading:90+i*10,pin:{x:.4,y:.4,cell:'D3'},how:'manual',raw:shoot(w,SL.T.id()).toDataURL('image/jpeg',.8)};caps.set(id,cap);await store.put('caps',cap);mp.utils[i].photos.push(id);mp.utils[i].at=when}
+  {const u='Electric',x=mp.utils[0],w=await markScene(u,17,.35,'grass'),t={dx:.02,dy:-.015,rot:2.5,scale:1.04},when=new Date(TODAY.getTime()-864e5*0+3600e3*-14).toISOString(),geo={...mp.geo,acc:6},raw=shoot(w,t),c=stamp(shoot(w,t),mp,u,geo,when),id=`${mp.id}-Electric-1`;
+    const cap={id,spot:mp.id,app:APP,t:when,img:c.toDataURL('image/jpeg',.8),w:1200,h:900,geo,pitch:36,roll:0,heading:92,align:{H:SL.T.toH(t,1200,900),t,method:'image',q:.9},how:'auto',raw:raw.toDataURL('image/jpeg',.8)};caps.set(id,cap);await store.put('caps',cap);x.checks.push({cap:id,t:when,visible:true,note:'Paint fading after rain, still readable'})}
+  for(const t of tickets)await saveT(t);await saveSet();await store.put('kv',{k:'dc-started',v:1})}
+async function load(){await store.open();started=!!(await store.get('kv','dc-started'));const s=await store.get('kv','dc-set');if(s)set=s.v;tickets=(await store.all('spots')).filter(x=>x.app===APP&&x.kind==='ticket').sort((a,b)=>a.entered<b.entered?1:-1);caps=new Map((await store.all('caps')).filter(c=>c.app===APP).map(c=>[c.id,c]));sel=sel||tickets[0]?.id}
+
+/* ---------- views ---------- */
+function vWelcome(){return`<div class="welcome"><h2>Welcome to DigClear</h2><p style="margin:0">Track every locate ticket: when digging can start, which utilities have answered, when it lapses, and photo proof of every mark with time and GPS.</p>
+  <button class="pri" data-act="fresh">Start with an empty board</button><button data-act="sample">Explore with sample tickets</button><p class="mute">Everything stays on this phone. <a href="privacy.html">Privacy</a></p></div>`}
+function vBoard(){const L=tickets.map(t=>({t,L:life(t)}));const n=k=>L.filter(x=>x.L.st===k).length;const order={hold:0,soon:1,clear:2,wait:3,expired:4};L.sort((a,b)=>order[a.L.st]-order[b.L.st]||((dist(a.t)??0)-(dist(b.t)??0)));
+  const acts=[];L.forEach(({t,L})=>{if(L.st==='wait')acts.push([L.start,'Dig opens',t]);if(L.st==='hold')acts.push([TODAY,t.utils.some(x=>x.st==='problem')?'Call operator':t.utils.some(x=>x.checks?.slice(-1)[0]?.visible===false)?'Request re-mark':'Chase reply',t]);if(L.st==='soon'||L.st==='clear')acts.push([L.upd,'Update by',t])});acts.sort((a,b)=>a[0]-b[0]);
+  if(!tickets.length)return`<div class="card"><h2>No tickets yet</h2><p class="mute" style="margin-top:0">Add a ticket after you call 811 or file online.</p><button class="pri" data-v="new">Add a ticket</button></div>`;
+  return`<div class="counts"><div><b>${n('clear')+n('soon')}</b><span>Clear to dig</span></div><div><b style="color:var(--pink)">${n('hold')}</b><span>On hold</span></div><div><b>${n('wait')}</b><span>Waiting</span></div><div><b>${n('soon')}</b><span>Update soon</span></div></div>
+  <div class="card"><h2>Next up</h2>${acts.slice(0,5).map(a=>`<div class="act"><b>${fmt(a[0])}</b><div><b style="font-size:16px">${a[1]}</b> · ${esc(a[2].job)}<div class="mute">#${a[2].no}</div></div></div>`).join('')||'<p class="mute">Nothing due.</p>'}</div>
+  ${L.map(({t,L})=>{const ph=t.utils.reduce((a,x)=>a+(x.photos?.length||0),0),d=dist(t);return`<button class="card tk" data-sel="${t.id}"><div class="row"><div class="sp"><b>${esc(t.job)}</b><div class="mute">#${t.no}${ph?` · ${ph} mark photo${ph>1?'s':''}`:''}${d!=null?` · ${d<1609?Math.round(d*3.281)+' ft':(d/1609).toFixed(1)+' mi'} away`:''}</div></div>${pill(L.st)}</div>${lifeBar(t,L)}<div class="row" style="margin-top:6px"><span class="sp mute">${L.why}</span>${marks(t)}</div></button>`}).join('')}`}
+function vTicket(){const t=cur();if(!t)return'<p>No tickets yet.</p>';const L=life(t);
+  const bn={clear:['var(--ink)','var(--bg)'],soon:['var(--ink)','var(--bg)'],wait:['var(--card)','var(--ink)'],hold:['var(--pink)','#fff'],expired:['var(--card)','var(--mute)']}[L.st];
+  return`<div class="row" style="margin-bottom:8px"><select id="pick" aria-label="Ticket">${tickets.map(k=>`<option value="${k.id}" ${k.id===t.id?'selected':''}>${esc(k.job)}</option>`).join('')}</select></div>
+  <div class="banner" style="background:${bn[0]};color:${bn[1]};border:1px solid var(--line)">${L.why}</div>
+  <div class="card"><div class="mute">Ticket</div><div class="big">#${esc(t.no)}</div><p style="margin:6px 0 0"><b>${esc(t.job)}</b><br>${esc(t.addr)}</p>${lifeBar(t,L)}
+  <dl class="facts"><dt>Dig area</dt><dd>${t.geo?`${t.geo.lat.toFixed(6)}, ${t.geo.lon.toFixed(6)}${t.geo.acc?` ±${Math.round(t.geo.acc*3.281)} ft`:''}`:'Not pinned'} <button class="ghost" data-act="pin" style="min-height:0;padding:0 4px">${t.geo?'Re-pin':'Pin with GPS'}</button></dd><dt>White-lined</dt><dd>${t.white?'Yes':'No'}</dd>${t.notes?`<dt>Notes</dt><dd>${esc(t.notes)}</dd>`:''}</dl></div>
+  <div class="card"><h2>Positive response and marks</h2><p class="mute" style="margin-top:0">Set each operator's answer. Photo the marks through the camera: ticket, time and GPS get burned into the picture. Before you dig, recheck from the same spot.</p>
+  ${t.utils.map((x,i)=>{const last=x.checks?.slice(-1)[0];return`<div class="ut"><span class="chip" style="background:${UT[x.u][0]}"></span><div><b>${esc(x.u)}</b><div class="mute">${UT[x.u][1]} paint or flags${x.at?` · photographed ${fmtT(x.at)}`:''}${last?` · rechecked ${fmtT(last.t)}: ${last.visible?'still visible':'not visible'}`:''}</div></div>
+   <div class="seg4">${STS.map(([k,l])=>`<button data-u="${i}" data-st="${k}" aria-pressed="${x.st===k}">${l}</button>`).join('')}</div>
+   <div class="photos">${(x.photos||[]).concat((x.checks||[]).map(c=>c.cap)).map(id=>caps.get(id)).filter(Boolean).map(c=>`<img src="${c.img}" alt="${esc(x.u)} marks ${fmtT(c.t)}" data-view="${c.id}">`).join('')}
+   <button data-photo="${i}" style="font-size:15px">${x.photos?.length?'Add photo':'Photo the marks'}</button>${x.photos?.length?`<button data-recheck="${i}" style="font-size:15px">Recheck before digging</button>`:''}</div></div>`}).join('')}</div>
+  <div class="card"><h2>Issues</h2>${t.issues.length?t.issues.map(s=>`<div class="act"><b style="font-size:14px">${fmtT(s.t)}</b><div>${esc(s.text)}${s.geo?`<div class="mute">${s.geo.lat.toFixed(6)}, ${s.geo.lon.toFixed(6)}</div>`:''}</div></div>`).join(''):'<p class="mute" style="margin-top:0">Missing marks, mismarks, a hit line. Log it here with the time and your GPS.</p>'}
+  <label for="iss">New issue</label><textarea id="iss" rows="2" placeholder="Gas marks stop at the drive, nothing past it"></textarea><div class="row" style="margin-top:8px"><button data-act="addiss">Log issue</button><span class="sp"></span><button data-act="copyt">Copy evidence summary</button><button data-act="copyrec">Copy Field Record</button></div></div>
+  <button class="ghost" data-act="deltk">Delete ticket</button>`}
+function vNew(){const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
+  return`<div class="card"><h2>Add a ticket</h2><p class="mute" style="margin-top:0">Enter it after you call 811 or file online. Dates fill in from your state's rules.</p>
+  <label for="nn">Ticket number</label><input id="nn" inputmode="numeric" placeholder="2611231234"><label for="nj">Job name</label><input id="nj" placeholder="Pine St water service">
+  <label for="na">Dig area</label><textarea id="na" rows="2" placeholder="Address and where on the lot"></textarea><label for="ne">Called in</label><input id="ne" type="datetime-local" value="${now.toISOString().slice(0,16)}">
+  <label>Operators on the ticket</label><div class="checks">${Object.keys(UT).map((u,i)=>`<label><input type="checkbox" data-nu="${u}" ${i<6&&i!==3?'checked':''}><span class="mk" style="background:${UT[u][0]}"></span>${u}</label>`).join('')}</div>
+  <label style="display:flex;gap:10px;align-items:center;font-weight:400;font-size:16px;margin-top:12px"><input id="nw" type="checkbox" checked style="width:22px;min-height:22px"> Dig area white-lined</label>
+  <label style="display:flex;gap:10px;align-items:center;font-weight:400;font-size:16px"><input id="ng" type="checkbox" checked style="width:22px;min-height:22px"> Pin the dig area with my GPS</label>
+  <label for="nt">Notes</label><input id="nt"><div class="row" style="margin-top:14px"><button class="pri" data-act="create">Add ticket</button></div></div>`}
+function vRules(){return`<div class="card"><h2>Timing rules</h2><label for="rs">State</label><select id="rs">${Object.entries(PRESET).map(([k,v])=>`<option value="${k}" ${set.state===k?'selected':''}>${v.name}</option>`).join('')}</select>
+  <div class="row" style="gap:12px"><div class="sp"><label for="rw">Full working days to wait</label><input id="rw" type="number" min="0" value="${set.wait}" ${set.state==='SC'?'disabled':''}></div><div class="sp"><label for="rl">Ticket good for (working days)</label><input id="rl" type="number" min="1" value="${set.life}" ${set.state==='SC'?'disabled':''}></div></div>
+  <p class="mute">South Carolina: operators get 3 full working days to respond, not counting the day you call, weekends or holidays. The ticket then runs 15 working days. An update restarts the 3-day notice and extends it 15 more. Other states: choose Custom and enter your one-call center's numbers.</p></div>
+  <div class="card"><h2>Holidays</h2><p class="mute" style="margin-top:0">Skipped like weekends. Check your one-call center's holiday list each year.</p><textarea id="rh" rows="7">${set.hol.join('\n')}</textarea><div class="row" style="margin-top:8px"><button data-act="savehol">Save holidays</button></div></div>
+  <div class="card"><h2>Your data</h2><p class="mute" style="margin-top:0">Tickets and photos stay on this phone. Copy a Field Record from a ticket to back it up or move it to another phone.</p><label for="imp">Paste a Field Record</label><textarea id="imp" rows="3" placeholder='{"fieldRecord":1,…}'></textarea><div class="row" style="margin-top:8px"><button data-act="import">Import</button><span class="sp"></span><a href="privacy.html" class="mute">Privacy</a></div></div>
+  <button class="ghost" data-act="wipe">Erase everything on this phone</button>`}
+
+/* ---------- camera ---------- */
+async function photoMarks(t,i){const x=t.utils[i];const w=await markScene(x.u,17+i,1,i%2?'asphalt':'grass');
+  window.__dcScan=SL.Scanner.open({mode:'ref',needCard:false,title:`${x.u} marks`,sim:{img:shoot(w,SL.T.id()),geo:t.geo||{lat:35.0021,lon:-81.0042,acc:5}},onDone:async r=>{if(!r)return;const raw=await SL.img(r.img),c=document.createElement('canvas');c.width=r.w;c.height=r.h;c.getContext('2d').drawImage(raw,0,0);stamp(c,t,x.u,r.geo,r.t);
+    const id=`${t.id}-${x.u.replace(/\W/g,'')}-${Date.now().toString(36)}`,cap={id,spot:t.id,app:APP,t:r.t,img:c.toDataURL('image/jpeg',.82),raw:r.img,w:r.w,h:r.h,geo:r.geo,pitch:r.pitch,roll:r.roll,heading:r.heading,zoom:r.zoom,pin:r.pin,how:r.how,exif:r.exif};
+    caps.set(id,cap);await store.put('caps',cap);x.photos=x.photos||[];x.photos.push(id);x.at=r.t;if(x.st==='pending')x.st='marked';await saveT(t);render();toast(`Photo stamped${r.geo?' with GPS':''} and saved`)}})}
+async function recheck(t,i){const x=t.utils[i],ref=caps.get(x.photos[0]);if(!ref)return;const w=await markScene(x.u,17+i,.4,i%2?'asphalt':'grass');
+  window.__dcScan=SL.Scanner.open({mode:'return',title:`Recheck ${x.u} marks`,ref:{img:ref.raw||ref.img,w:ref.w,h:ref.h,geo:ref.geo,pitch:ref.pitch,roll:ref.roll,heading:ref.heading,pin:ref.pin},sim:{img:shoot(w,SL.T.id()),geo:ref.geo},onDone:async r=>{if(!r)return;const raw=await SL.img(r.img),c=document.createElement('canvas');c.width=r.w;c.height=r.h;c.getContext('2d').drawImage(raw,0,0);stamp(c,t,x.u,r.geo,r.t);
+    const id=`${t.id}-${x.u.replace(/\W/g,'')}-r${Date.now().toString(36)}`,cap={id,spot:t.id,app:APP,t:r.t,img:c.toDataURL('image/jpeg',.82),raw:r.img,w:r.w,h:r.h,geo:r.geo,pitch:r.pitch,roll:r.roll,heading:r.heading,align:r.align,how:r.how};caps.set(id,cap);await store.put('caps',cap);recheckSheet(t,x,ref,cap)}})}
+async function recheckSheet(t,x,ref,cap){sheet(`<h2>Are the ${esc(x.u)} marks still there?</h2><p class="mute" style="margin-top:0">Left is ${fmtT(ref.t)}, right is now. Drag across to compare.${cap.align?` Lined up ${Math.round(cap.align.q*100)}%.`:''}</p><div id="rcmp"></div>
+  <div class="row" style="margin-top:12px"><button class="pri" id="rv">Still visible</button><button id="rn">Faded or gone</button></div><label for="rnote">Note</label><input id="rnote" placeholder="Paint washed out along the drive">`,async el=>{
+    const[a,b]=await Promise.all([SL.img(ref.raw||ref.img),SL.img(cap.raw||cap.img)]);cmpApi=SL.Compare.mount(el.querySelector('#rcmp'),a,b,cap.align?.H||[1,0,0,0,1,0,0,0,1],{mode:'swipe'});
+    const done=async v=>{x.checks=x.checks||[];x.checks.push({cap:cap.id,t:cap.t,visible:v,note:el.querySelector('#rnote').value.trim()});await saveT(t);closeSheet();render();toast(v?'Recheck saved':'Marked as faded. Ticket on hold until re-marked')};
+    el.querySelector('#rv').onclick=()=>done(true);el.querySelector('#rn').onclick=()=>done(false)})}
+function viewPhoto(id){const c=caps.get(id);if(!c)return;sheet(`<img src="${c.img}" alt="" style="width:100%;border-radius:12px"><p class="mute">${fmtT(c.t)} · ${c.geo?`${c.geo.lat.toFixed(6)}, ${c.geo.lon.toFixed(6)}`:'No GPS'}${c.heading!=null?` · facing ${SL.Geo.compass(c.heading)}`:''}</p><button id="pc">Close</button>`,el=>el.querySelector('#pc').onclick=closeSheet)}
+function gpsOnce(){return new Promise(res=>{if(me)return res(me);const stop=SL.Geo.watch(g=>{stop();res(g.err?null:g)});setTimeout(()=>res(null),12000)})}
+
+/* ---------- render & events ---------- */
+function render(){$('#view').innerHTML=!started?vWelcome():view==='board'?vBoard():view==='ticket'?vTicket():view==='new'?vNew():vRules();
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',started&&b.dataset.v===view));try{history.replaceState(null,'','#'+(view==='ticket'&&cur()?'ticket-'+cur().id:view))}catch(e){}}
+function summary(t){const L=life(t);return`LOCATE TICKET #${t.no}\n${t.job}\n${t.addr}\n${t.geo?`Dig area GPS: ${t.geo.lat.toFixed(6)}, ${t.geo.lon.toFixed(6)}\n`:''}Called: ${fmtT(t.entered)}\nDig opens: ${fmt(L.start)}\nUpdate by: ${fmt(L.upd)}\nLapses after: ${fmt(L.thru)}\nStatus: ${LBL[L.st]}: ${L.why}\n\n${t.utils.map(x=>`${x.u.padEnd(24)}${STS.find(s=>s[0]===x.st)[1]}\n${(x.photos||[]).map(id=>caps.get(id)).filter(Boolean).map(c=>`   photo ${fmtT(c.t)}${c.geo?` at ${c.geo.lat.toFixed(6)}, ${c.geo.lon.toFixed(6)} ±${Math.round((c.geo.acc||0)*3.281)} ft`:''}`).join('\n')}${(x.checks||[]).map(c=>`\n   recheck ${fmtT(c.t)}: ${c.visible?'visible':'NOT visible'}${c.note?' ('+c.note+')':''}`).join('')}`).join('\n')}${t.issues.length?'\n\nIssues:\n'+t.issues.map(s=>`${fmtT(s.t)}  ${s.text}`).join('\n'):''}\n\nPhotos are stamped by DigClear with the ticket number, time and GPS at capture.`}
+document.addEventListener('click',async e=>{const b=e.target.closest('button,img[data-view]');if(!b||b.closest('#sheet')||b.closest('.sl-root'))return;
+  if(b.dataset.view){viewPhoto(b.dataset.view);return}
+  if(b.dataset.v){if(!started)return;view=b.dataset.v;render();scrollTo(0,0);return}
+  if(b.dataset.sel){sel=b.dataset.sel;view='ticket';render();scrollTo(0,0);return}
+  const t=cur();
+  if(b.dataset.u!=null){t.utils[+b.dataset.u].st=b.dataset.st;await saveT(t);const y=scrollY;render();scrollTo(0,y);return}
+  if(b.dataset.photo!=null){photoMarks(t,+b.dataset.photo);return}
+  if(b.dataset.recheck!=null){recheck(t,+b.dataset.recheck);return}
+  const a=b.dataset.act;
+  if(a==='fresh'){await store.put('kv',{k:'dc-started',v:1});await saveSet();started=true;view='new';render()}
+  if(a==='sample'){$('#view').innerHTML='<div class="loading">Setting up sample tickets…</div>';await seed();await load();started=true;view='board';render()}
+  if(a==='pin'){toast('Getting your GPS fix…');const g=await gpsOnce();if(!g){toast('No GPS here. It works once the app is installed or opened from its own web address.');return}t.geo={lat:g.lat,lon:g.lon,acc:g.acc};await saveT(t);render();toast('Dig area pinned')}
+  if(a==='addiss'){const v=$('#iss').value.trim();if(!v)return;t.issues.push({t:new Date().toISOString(),text:v,geo:me?{lat:me.lat,lon:me.lon}:null});await saveT(t);render();toast('Issue logged with the time')}
+  if(a==='copyt')copy(summary(t),'Evidence summary copied');
+  if(a==='copyrec'){const ids=t.utils.flatMap(x=>(x.photos||[]).concat((x.checks||[]).map(c=>c.cap)));copy(SL.Record.pack(APP,t,ids.map(id=>caps.get(id)).filter(Boolean)),'Field Record copied, with photos')}
+  if(a==='deltk'){if(b.textContent!=='Tap again to delete'){b.textContent='Tap again to delete';return}await store.del('spots',t.id);tickets=tickets.filter(x=>x!==t);sel=tickets[0]?.id;view='board';render()}
+  if(a==='create'){const no=$('#nn').value.trim(),job=$('#nj').value.trim(),en=$('#ne').value;const us=[...document.querySelectorAll('[data-nu]:checked')].map(i=>i.dataset.nu);
+    if(!no||!job||!en){toast('Ticket number, job and call time are needed');return}if(!us.length){toast('Pick at least one operator');return}
+    const nt={id:'t'+Date.now().toString(36),app:APP,kind:'ticket',no,job,addr:$('#na').value.trim(),entered:new Date(en).toISOString(),utils:us.map(u=>({u,st:'pending',photos:[],checks:[]})),white:$('#nw').checked,notes:$('#nt').value.trim(),issues:[],geo:null};
+    const wantGps=$('#ng').checked;tickets.unshift(nt);await saveT(nt);sel=nt.id;view='ticket';render();scrollTo(0,0);toast(`Dig opens ${fmt(life(nt).start)}`);
+    if(wantGps){const g=await gpsOnce();if(g){nt.geo={lat:g.lat,lon:g.lon,acc:g.acc};await saveT(nt);render()}}}
+  if(a==='savehol'){set.hol=$('#rh').value.split(/\s+/).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x));await saveSet();render();toast('Holidays saved')}
+  if(a==='import'){try{const o=SL.Record.unpack($('#imp').value);if(o.app!==APP){toast(`That's a ${o.app} record`);return}const x=o.spot;x.id=x.id+'-i'+Date.now().toString(36).slice(-3);for(const c of o.caps||[]){c.spot=x.id;caps.set(c.id,c);await store.put('caps',c)}tickets.unshift(x);await saveT(x);sel=x.id;view='ticket';render();toast('Imported #'+x.no)}catch(err){toast('That isn\'t a Field Record')}}
+  if(a==='wipe'){if(b.textContent!=='Tap again to erase everything'){b.textContent='Tap again to erase everything';return}for(const x of tickets)await store.del('spots',x.id);for(const c of caps.values())await store.del('caps',c.id);await store.del('kv','dc-started');tickets=[];caps.clear();started=false;render()}
+});
+document.addEventListener('change',async e=>{const t=e.target;if(t.closest('#sheet')||t.closest('.sl-root'))return;
+  if(t.id==='pick'){sel=t.value;render()}
+  if(t.id==='rs'){set.state=t.value;if(t.value==='SC'){set.wait=3;set.life=15}await saveSet();render()}
+  if(t.id==='rw'||t.id==='rl'){const v=parseInt(t.value);if(v>=0){set[t.id==='rw'?'wait':'life']=Math.max(t.id==='rl'?1:0,v);await saveSet()}}
+});
+SL.Geo.watch(g=>{if(!g.err){const f=!me;me=g;if(f&&view==='board'&&started)render()}});
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!/claude/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+(async()=>{await load();const h=location.hash.slice(1);if(h.startsWith('ticket-')&&tickets.some(t=>t.id===h.slice(7))){sel=h.slice(7);view='ticket'}else if(['new','rules'].includes(h))view=h;render()})();
+}
+</script>
+</body>
+</html>

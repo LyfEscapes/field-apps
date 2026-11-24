@@ -1,0 +1,35 @@
+{
+ "name": "DigClear",
+ "short_name": "DigClear",
+ "description": "Locate tickets for small contractors: dig windows, positive response and stamped photo proof of every mark.",
+ "id": "./?app=digclear",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#1f2123",
+ "orientation": "portrait",
+ "categories": [
+  "productivity",
+  "utilities",
+  "business"
+ ],
+ "icons": [
+  {
+   "src": "icons/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icons/maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

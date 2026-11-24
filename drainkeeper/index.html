@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b3a45">
+<title>Drain Keeper</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: plain-spoken public-works tool an HOA board or a two-person town crew can run
+   IDEA: the drainage plat a county engineer marks up, every pipe a photo point you can return to exactly
+   PICTURE: the neighborhood drainage map, then each asset's own photo history lined up frame for frame
+   COLOUR and TYPE: storm-water teal, white ground, a five-step condition scale ending in red; Public Sans
+   LAYOUT: one app column, bottom tabs, asset pages, full-screen SiteLock camera */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0b1417);--card:light-dark(#eef4f4,#132125);--ink:light-dark(#0b2a33,#e4f0f1);--mute:light-dark(#4f6970,#97b1b6);--line:light-dark(#d3e2e3,#24393e);--tl:#0e7c86;--water:light-dark(#9fd3dc,#1d5966);--road:light-dark(#d9dcdc,#2c3436);--lot:light-dark(#f3f5f1,#111c1f);--house:light-dark(#c9cfc9,#33403f);--grass:light-dark(#e3eedf,#132017)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Public Sans",system-ui,sans-serif;overflow-x:clip}
+header{background:#0b3a45;color:#e8f6f7;padding:20px max(5vw,16px) 22px}
+header .in,main{max-width:760px;margin:0 auto}
+h1{font-size:38px;line-height:1.05;margin:2px 0 4px;font-weight:800}h2{font-size:22px;line-height:1.15;margin:0 0 6px;font-weight:800}
+header small{font-size:14px;opacity:.85}
+main{padding:16px max(4vw,14px) 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.mute{color:var(--mute);font-size:14px}
+.big{font-size:clamp(32px,8.5vw,48px);font-weight:800;line-height:1;white-space:nowrap}
+button,.btn{font:600 16px "Public Sans",system-ui,sans-serif;min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.pri{background:var(--tl)!important;border-color:var(--tl)!important;color:#fff!important}
+button.ghost{background:none;border:0;color:var(--tl);padding:10px 4px}
+button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:focus-visible{outline:3px solid var(--tl);outline-offset:2px}
+input,select,textarea{font:16px "Public Sans",system-ui,sans-serif;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
+.stage{overflow:auto;border-radius:14px;border:1px solid var(--line);background:var(--grass)}
+.stage svg{display:block;height:auto}
+#lmap{height:460px;border-radius:14px;border:1px solid var(--line);position:relative;z-index:0;isolation:isolate}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;margin-top:8px}.legend span{display:inline-flex;gap:6px;align-items:center}.legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.as{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);width:100%;text-align:left;font-weight:400;background:none;border-radius:0;border-left:0;border-right:0;border-bottom:0}
+.as img,.noimg{width:64px;height:48px;object-fit:cover;border-radius:8px;background:var(--line);display:block}
+.cn{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+.tag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:13px;background:var(--bg);border:1px solid var(--line);margin:2px 4px 2px 0;white-space:nowrap}
+.seg5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.seg5 button{padding:6px 0;font-size:15px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:6px}.seg button{padding:8px 4px;font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}.tags button{min-height:38px;padding:6px 10px;font-size:14px;font-weight:400}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) 34px;gap:10px;align-items:center;margin:6px 0;font-size:14px}.bar div{height:16px;border-radius:4px}.bar b{text-align:right}
+.chk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.chk input{width:26px;min-height:26px}
+.hero{border-radius:14px;overflow:hidden;background:#111}.hero canvas{display:block;width:100%;height:auto}
+.facts{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px;margin:10px 0 0}.facts dt{color:var(--mute)}.facts dd{margin:0;overflow-wrap:anywhere}
+.badge{display:inline-flex;gap:6px;align-items:center;border-radius:10px;padding:4px 10px;font-size:13px;font-weight:700;background:var(--bg);border:1px solid var(--line)}.badge.ok{background:#0e7c5f;color:#fff;border-color:#0e7c5f}
+.mstage{overflow:auto;border-radius:14px;background:#111;max-height:62vh}.mstage canvas{display:block;width:100%;max-width:none;cursor:crosshair;touch-action:none}
+.print{background:#fff;border-radius:10px;padding:8px}.print svg{width:100%;height:auto;display:block}
+.tagsheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:700}.scrim.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+.hint{background:var(--tl);color:#fff;border-radius:10px;padding:10px 12px;font-weight:600;margin-bottom:8px}
+nav{position:fixed;left:0;right:0;bottom:0;background:light-dark(rgba(255,255,255,.95),rgba(11,20,23,.95));border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:500}
+nav .in{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
+nav button{border:0;border-radius:0;background:none;font-size:13px;min-height:56px;color:var(--mute);padding:8px 2px}
+nav button[aria-current=true]{color:var(--tl);box-shadow:inset 0 3px 0 var(--tl);background:none}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#0b3a45;color:#fff;padding:10px 16px;border-radius:10px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:1100;max-width:90vw}#toast.on{opacity:1}
+.loading{display:grid;place-items:center;min-height:40vh;text-align:center;color:var(--mute)}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<header><div class="in"><small>LyfEscapes · drainage inventory for HOAs and small towns</small><h1>Drain Keeper</h1><small>Photos and records stay on this phone.</small></div></header>
+<main id="view"><div class="loading">Setting up the sample neighborhood…</div></main>
+<nav><div class="in" id="tabs"><button data-v="map">Map</button><button data-v="assets">Assets</button><button data-v="storm">Storm</button><button data-v="compare">Compare</button><button data-v="report">Report</button></div></nav>
+<div class="scrim" id="scrim"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+<script src="vendor/cv.js"></script>
+<script src="vendor/aruco.js"></script>
+<script src="sitelock.js"></script>
+<script>
+{
+const SL=window.SiteLock,APP='drainkeeper',store=new SL.Store(APP);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const COND=[null,['Good','#0e7c86'],['Fair','#5d9e74'],['Worn','#c99400'],['Poor','#e0621b'],['Failed','#c81e1e']];
+const TYPES={inlet:'Inlet / catch basin',culvert:'Pipe or culvert',ditch:'Ditch or swale',outfall:'Outfall / headwall',pond:'Detention pond',structure:'Pond outlet structure'};
+const PFX={inlet:'INL',culvert:'CUL',ditch:'DIT',outfall:'OUT',pond:'PND',structure:'OCS'};
+const ISSUES=['Sediment','Debris','Vegetation','Erosion','Standing water','Crushed or bent','Joint separation','Sinkhole nearby','Trash rack clogged'];
+const OWN=['HOA','County','Town','State DOT','Private lot','Unknown'];
+const MLABEL=['Sediment depth','Pipe opening','Scour depth','Crack width','Other'];
+const OTHER=[['crackwatch','Crack Watch'],['trenchcheck','Trench Check'],['digclear','DigClear'],['cylinderchain','Cylinder Chain'],['corefield','CoreField']];
+const NOW=new Date(),D=n=>{const d=new Date(NOW);d.setDate(d.getDate()+n);return d};
+const iso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+const fmt=d=>new Date(String(d).length===10?d+'T12:00':d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+const inch=mm=>SL.len(mm,'in');
+// schematic map units <-> GPS (sample neighborhood ≈ 300 m across)
+const G0=()=>meta.g0||{lat:35.0012,lon:-81.0015},toGeo=(x,y)=>({lat:G0().lat-y*2.7e-6,lon:G0().lon+x*3.29e-6}),toXY=g=>({x:(g.lon-G0().lon)/3.29e-6,y:(G0().lat-g.lat)/2.7e-6});
+let assets=[],floods=[],caps=new Map(),meta={hoa:'Ridgeview Commons HOA',forecast:{inches:2.5,date:iso(D(3))},route:{}};
+let view='map',cur=null,mode=null,zoom=1,filt='all',insp=null,meas=null,cmp=null,me=null,mapKind='plan',tilesOK=false,lmap=null;
+const imgCache=new Map();const getImg=async x=>{const id=typeof x==='string'?x:x?.id;if(imgCache.has(id))return imgCache.get(id);const c=typeof x==='object'&&x?x:caps.get(id);if(!c)return null;const im=await SL.img(c.img);imgCache.set(id,im);return im};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2800)}
+function copy(t,m){try{navigator.clipboard.writeText(t).then(()=>toast(m),()=>toast('Copy was blocked here'))}catch(e){toast('Copy was blocked here')}}
+function sheet(html,mount){const sh=$('#sheet');sh.onclick=null;sh.onchange=null;sh.innerHTML=html;$('#scrim').classList.add('on');mount&&mount(sh)}
+const closeSheet=()=>$('#scrim').classList.remove('on');
+$('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeSheet()});
+
+/* ---------- sample scenes: stand-ins for real field photos ---------- */
+const WW=1440,WH=1080;
+const svgImg=async svg=>SL.img('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg));
+async function scene(type,o){
+  const c=document.createElement('canvas');c.width=WW;c.height=WH;const g=c.getContext('2d');let s=o.seed;const r=()=>(s=(s*16807)%2147483647)/2147483647;
+  const grass=(x,y,w,h)=>{g.fillStyle='#5f7d3c';g.fillRect(x,y,w,h);for(let i=0;i<w*h/90;i++){const v=r();g.strokeStyle=`rgba(${40+v*70|0},${85+v*80|0},${30+v*30|0},.7)`;g.lineWidth=2;const px=x+r()*w,py=y+r()*h;g.beginPath();g.moveTo(px,py);g.lineTo(px+(r()-.5)*8,py-6-r()*12);g.stroke()}};
+  const conc=(x,y,w,h,base=168)=>{g.fillStyle=`rgb(${base},${base-4},${base-12})`;g.fillRect(x,y,w,h);for(let i=0;i<w*h/120;i++){const v=base-40+r()*80|0;g.fillStyle=`rgba(${v},${v-3},${v-8},.5)`;g.fillRect(x+r()*w,y+r()*h,1+r()*3,1+r()*3)}g.fillStyle='rgba(60,50,40,.12)';for(let i=0;i<6;i++){g.beginPath();g.ellipse(x+r()*w,y+r()*h,30+r()*90,12+r()*40,r(),0,7);g.fill()}};
+  const debris=(cx,cy,rad,n)=>{for(let i=0;i<n;i++){const a=r()*7,d=r()*rad;g.fillStyle=['#7a4a1f','#9b6a2c','#5c3a17','#b08540'][i%4];g.beginPath();g.ellipse(cx+Math.cos(a)*d,cy+Math.sin(a)*d*.6,6+r()*10,3+r()*5,r()*3,0,7);g.fill()}for(let i=0;i<n/8;i++){g.strokeStyle='#4a3420';g.lineWidth=4+r()*4;const x=cx+(r()-.5)*rad*2,y=cy+(r()-.5)*rad;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*160,y+(r()-.5)*50);g.stroke()}};
+  if(type==='culvert'||type==='outfall'){
+    grass(0,0,WW,WH);const hx=240,hy=250,hw=960,hh=520;conc(hx,hy,hw,hh,o.dark?150:172);g.fillStyle='rgba(0,0,0,.25)';g.fillRect(hx,hy+hh-14,hw,14);
+    const cx=720,cy=560,R=type==='culvert'?205:170;g.fillStyle='#8e8a82';g.beginPath();g.arc(cx,cy,R+22,0,7);g.fill();const rg=g.createRadialGradient(cx,cy,10,cx,cy,R);rg.addColorStop(0,'#050505');rg.addColorStop(1,'#2a2724');g.fillStyle=rg;g.beginPath();g.arc(cx,cy,R,0,7);g.fill();
+    if(o.block){const yb=cy+R-2*R*o.block/100;g.save();g.beginPath();g.arc(cx,cy,R,0,7);g.clip();g.fillStyle='#7b5a35';g.fillRect(cx-R,yb,2*R,cy+R-yb);for(let i=0;i<400;i++){g.fillStyle=`rgba(${90+r()*60|0},${60+r()*40|0},30,.6)`;g.fillRect(cx-R+r()*2*R,yb+r()*(cy+R-yb),3,2)}g.restore();debris(cx,yb,R*.8,Math.round(o.block/2))}
+    g.fillStyle='#b9b4aa';g.fillRect(hx+40,hy+hh,hw-80,90);for(let i=0;i<70;i++){const x=hx+r()*hw,y=hy+hh+90+r()*200;g.fillStyle=`rgb(${120+r()*60|0},${118+r()*55|0},${110+r()*50|0})`;g.beginPath();g.moveTo(x,y);for(let k=0;k<6;k++)g.lineTo(x+Math.cos(k)*(18+r()*22),y+Math.sin(k)*(12+r()*16));g.fill()}
+    if(o.erosion){g.fillStyle='rgba(70,45,25,.85)';g.beginPath();g.ellipse(cx+40,hy+hh+150,180*o.erosion+40,60*o.erosion+15,0,0,7);g.fill();g.fillStyle='rgba(40,25,12,.6)';g.beginPath();g.ellipse(cx+40,hy+hh+140,120*o.erosion,35*o.erosion,0,0,7);g.fill()}
+    g.fillStyle='rgba(120,160,175,.55)';g.beginPath();g.ellipse(cx,hy+hh+60,R*.9,26,0,0,7);g.fill();
+    if(o.board!=null){const b=await svgImg(SL.Card.svg(o.board,'DRAIN KEEPER'));g.save();g.shadowColor='rgba(0,0,0,.4)';g.shadowBlur=12;g.drawImage(b,hx+40,hy+290,279.4*.672,215.9*.672);g.restore()}
+    if(o.tag){const t=await svgImg(SL.Card.tagSVG(o.tag,'Drain Keeper'));g.drawImage(t,hx+hw-150,hy+40,30*3,38*3)}
+  }else if(type==='inlet'){
+    g.fillStyle='#3a3d40';g.fillRect(0,0,WW,WH);for(let i=0;i<9000;i++){const v=40+r()*50|0;g.fillStyle=`rgb(${v},${v},${v+3})`;g.fillRect(r()*WW,r()*WH,2,2)}
+    conc(0,700,WW,380,182);g.fillStyle='rgba(0,0,0,.3)';g.fillRect(0,700,WW,16);grass(0,900,WW,180);
+    const gx=420,gy=420,gw=600,gh=280;g.fillStyle='#1b1b1c';g.fillRect(gx-16,gy-16,gw+32,gh+32);g.fillStyle='#4b4d50';g.fillRect(gx,gy,gw,gh);g.fillStyle='#0c0c0c';for(let i=0;i<12;i++)g.fillRect(gx+20+i*48,gy+18,24,gh-36);
+    if(o.block)debris(gx+gw/2,gy+gh/2,gw*.55*Math.sqrt(o.block/100),Math.round(o.block*2.2));
+    if(o.board!=null){const b=await svgImg(SL.Card.svg(o.board,'DRAIN KEEPER'));g.drawImage(b,80,380,279.4*.9,215.9*.9)}
+  }else if(type==='ditch'){
+    grass(0,0,WW,WH);g.fillStyle='#6b5233';g.beginPath();g.moveTo(560,0);g.lineTo(880,0);g.lineTo(980,WH);g.lineTo(460,WH);g.fill();g.fillStyle='rgba(110,150,165,.8)';g.beginPath();g.moveTo(690,0);g.lineTo(760,0);g.lineTo(790,WH);g.lineTo(650,WH);g.fill();
+    for(let i=0;i<(o.veg||0)*160;i++){const x=480+r()*480,y=r()*WH;g.strokeStyle='#3f6a26';g.lineWidth=3;for(let k=0;k<5;k++){g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*30,y-20-r()*30);g.stroke()}}
+    if(o.erosion){g.fillStyle='rgba(120,80,45,.9)';for(let i=0;i<5;i++){g.beginPath();g.ellipse(520+r()*80,150+i*190,40+90*o.erosion,25+30*o.erosion,.3,0,7);g.fill()}}
+    if(o.block)debris(720,540,200,Math.round(o.block*1.5));
+  }else{
+    grass(0,0,WW,420);const wg=g.createLinearGradient(0,380,0,WH);wg.addColorStop(0,'#5d8a93');wg.addColorStop(1,'#2f5560');g.fillStyle=wg;g.fillRect(0,380,WW,WH-380);for(let i=0;i<200;i++){g.strokeStyle='rgba(255,255,255,.18)';g.lineWidth=2;const x=r()*WW,y=400+r()*680;g.beginPath();g.moveTo(x,y);g.lineTo(x+20+r()*40,y);g.stroke()}
+    if(type==='structure'){conc(560,240,320,520,170);g.fillStyle='#111';g.fillRect(600,300,240,260);g.fillStyle='#6a6a6a';for(let i=0;i<9;i++)g.fillRect(606+i*27,300,8,260);if(o.block)debris(720,470,130,Math.round(o.block*1.6))}
+    else if(o.block){g.fillStyle='rgba(120,95,55,.75)';g.beginPath();g.ellipse(720,700,300*o.block/60,110*o.block/60,0,0,7);g.fill()}
+    if(o.veg){for(let i=0;i<o.veg*120;i++){const x=r()*WW,y=380+r()*90;g.strokeStyle='#3f6a26';g.lineWidth=3;g.beginPath();g.moveTo(x,y);g.lineTo(x+(r()-.5)*20,y-40-r()*40);g.stroke()}}
+    if(o.tag){const t=await svgImg(SL.Card.tagSVG(o.tag,'Drain Keeper'));g.drawImage(t,610,250,60,76)}
+  }
+  return c;
+}
+function shoot(w,t){const c=document.createElement('canvas');c.width=1200;c.height=900;const g=c.getContext('2d');g.fillStyle='#222';g.fillRect(0,0,1200,900);g.save();g.translate(600+t.dx*1200,450+t.dy*1200);g.rotate(t.rot*Math.PI/180);g.scale(t.scale,t.scale);g.translate(-WW/2,-WH/2);g.drawImage(w,0,0);g.restore();return c}
+async function tagCloseup(id){const c=document.createElement('canvas');c.width=1200;c.height=900;const g=c.getContext('2d');let s=id*7;const r=()=>(s=(s*16807)%2147483647)/2147483647;g.fillStyle='#a9a49b';g.fillRect(0,0,1200,900);for(let i=0;i<12000;i++){const v=120+r()*80|0;g.fillStyle=`rgba(${v},${v-3},${v-9},.5)`;g.fillRect(r()*1200,r()*900,2,2)}const t=await svgImg(SL.Card.tagSVG(id,'Drain Keeper'));g.save();g.shadowColor='rgba(0,0,0,.35)';g.shadowBlur=10;g.drawImage(t,420,170,30*12,38*12);g.restore();return c}
+
+/* ---------- sample data ---------- */
+const SAMPLES=[
+ ['culvert',1,'24 in RCP under Ridgeview Dr at the creek',600,425,'County',true,{size:'24 in',mat:'Reinforced concrete'},[[200,1,10,[],{}],[120,3,25,['Sediment'],{}],[9,4,50,['Sediment','Debris'],{}]],{board:40}],
+ ['culvert',2,'Driveway culvert, lot 14',318,262,'Private lot',false,{size:'15 in',mat:'Corrugated metal'},[[200,5,75,['Crushed or bent'],{dark:1}]],{}],
+ ['inlet',1,'Curb inlet, Ridgeview Dr at Laurel Ct',420,300,'HOA',false,{},[[90,2,0,[],{}]],{}],
+ ['inlet',2,'Curb inlet, 112 Ridgeview Dr',220,298,'HOA',false,{},[[420,3,25,['Debris'],{}]],{}],
+ ['inlet',3,'Curb inlet, 140 Ridgeview Dr',780,330,'HOA',false,{},[[90,1,0,[],{}]],{}],
+ ['inlet',4,'Yard inlet behind lot 23',470,560,'Unknown',true,{},[[500,3,25,['Sediment'],{}],[30,4,50,['Sediment','Standing water'],{}]],{}],
+ ['ditch',1,'Roadside ditch, Laurel Ct east side',505,175,'HOA',false,{},[[150,3,25,['Vegetation'],{veg:.8}]],{}],
+ ['ditch',2,'Rear-lot swale, lots 22 to 26',380,590,'HOA',true,{},[[500,4,25,['Erosion','Standing water'],{erosion:.8,veg:.3}]],{}],
+ ['outfall',1,'Headwall outfall to Mill Branch',690,520,'HOA',false,{size:'18 in',mat:'Reinforced concrete'},[[330,1,0,[],{erosion:.15}],[150,2,0,['Erosion'],{erosion:.5}],[12,3,0,['Erosion'],{erosion:.95}]],{tag:201,board:41}],
+ ['pond',1,'Detention pond, common area',820,560,'HOA',true,{},[[380,3,0,['Sediment','Vegetation'],{block:40,veg:.7}]],{}],
+ ['structure',1,'Pond riser and trash rack',760,600,'HOA',true,{},[[380,4,50,['Trash rack clogged'],{}]],{tag:203}]];
+async function seed(){let rr=11;const rnd=()=>(rr=(rr*16807)%2147483647)/2147483647;
+  for(const[type,n,name,x,y,owner,crit,extra,visits,opt]of SAMPLES){
+    const id=`${PFX[type]}-${String(n).padStart(2,'0')}`,geo=toGeo(x,y),a={id,app:APP,kind:'asset',type,name,x,y,lat:geo.lat,lon:geo.lon,owner,crit,...extra,tag:opt.tag||null,hist:[],links:id==='OUT-01'?[{app:'crackwatch',id:'s-headwall',label:'Headwall crack above the pipe'}]:[]};
+    for(let i=0;i<visits.length;i++){const[ago,cond,block,issues,sc]=visits[i];const W=await scene(type,{seed:n*31+type.length,block,...sc,board:opt.board,tag:opt.tag});
+      const t=i?{dx:(rnd()-.5)*.06,dy:(rnd()-.5)*.06,rot:(rnd()-.5)*6,scale:1+(rnd()-.5)*.1}:SL.T.id(),shot=shoot(W,t),cid=`${id}-${i}`,date=iso(D(-ago));
+      const cap={id:cid,spot:id,app:APP,t:D(-ago).toISOString(),img:shot.toDataURL('image/jpeg',.82),w:1200,h:900,geo:{lat:geo.lat+(rnd()-.5)*3e-5,lon:geo.lon+(rnd()-.5)*3e-5,acc:3+rnd()*5},pitch:60+rnd()*10,roll:(rnd()-.5)*4,heading:200+rnd()*20,how:i?'auto':'manual'};
+      if(opt.board!=null){const d=SL.Card.detect(shot,1400);if(d&&d.card)cap.card={kind:d.card.kind,serial:d.card.serial,markers:d.card.markers,H:d.card.H,tilt:d.card.tilt,quad:d.card.quad,mmPerPx:d.card.mmPerPx}}
+      if(i){cap.align={H:SL.T.toH(t,1200,900),t,method:'image',q:.92}}else{a.ref=cid;a.pin={x:.6,y:.62,cell:SL.Grid.label(.6,.62)};a.geo=cap.geo;a.pitch=cap.pitch;a.roll=cap.roll;a.heading=cap.heading}
+      const m=[];if(type==='culvert'&&opt.board!=null&&block){const R=205,cx=720,cy=560,p=[[cx+40,cy+R],[cx+40,cy+R-2*R*block/100]].map(q=>[600+(q[0]-WW/2)*t.scale*Math.cos(t.rot*Math.PI/180)-(q[1]-WH/2)*t.scale*Math.sin(t.rot*Math.PI/180)+t.dx*1200,450+(q[0]-WW/2)*t.scale*Math.sin(t.rot*Math.PI/180)+(q[1]-WH/2)*t.scale*Math.cos(t.rot*Math.PI/180)+t.dy*1200]);
+        if(cap.card)m.push({label:'Sediment depth',mm:SL.Card.mm(cap.card.H,p[0],p[1]),pts:p,mmPts:p.map(q=>SL.H.apply(cap.card.H,q))})}
+      await store.put('caps',cap);a.hist.push({date,cond,block,issues,note:i?'':'Baseline survey',cap:cid,meas:m});}
+    const L=a.hist[a.hist.length-1];Object.assign(a,{cond:L.cond,block:L.block,issues:L.issues,last:L.date});await store.put('spots',a);}
+  await store.put('spots',{id:'flood-1',app:APP,kind:'flood',x:612,y:418,...toGeo(612,418),depth:'8 in over the road',date:iso(D(-34)),note:'Water over Ridgeview Dr at the creek crossing for about 2 hours.'});
+  meta.sample=true;await store.put('kv',{k:'dk-meta',v:meta});await store.put('kv',{k:'dk-seeded',v:1});
+}
+let started=false;
+async function load(){await store.open();started=!!(await store.get('kv','dk-seeded'))||!!(await store.get('kv','dk-started'));const all=(await store.all('spots')).filter(s=>s.app===APP);assets=all.filter(s=>s.kind==='asset');floods=all.filter(s=>s.kind==='flood');caps=new Map((await store.all('caps')).filter(c=>c.app===APP).map(c=>[c.id,c]));const m=await store.get('kv','dk-meta');if(m)meta=m.v}
+const saveMeta=()=>store.put('kv',{k:'dk-meta',v:meta});
+const saveA=a=>store.put('spots',a);
+
+/* ---------- helpers ---------- */
+const overdue=a=>(NOW-new Date(a.last+'T12:00'))/864e5>365;
+const risk=a=>a.cond*2+a.block/25+(a.crit?3:0)+(overdue(a)?1:0);
+const onRoute=a=>a.cond>=4||a.block>=50||risk(a)>=9;
+const cn=c=>`<span class="cn" style="background:${COND[c][1]}">${c}</span>`;
+const capsOf=a=>[...caps.values()].filter(c=>c.spot===a.id).sort((x,y)=>x.t<y.t?-1:1);
+const I3=[1,0,0,0,1,0,0,0,1],Href=c=>c?.align?.H||I3;
+const dist=a=>me&&a.lat?SL.Geo.dist(me,{lat:a.lat,lon:a.lon}):null;
+const dtxt=a=>{const d=dist(a);return d==null?'':d<1000?` · ${Math.round(d*3.281)} ft ${SL.Geo.compass(SL.Geo.bearing(me,{lat:a.lat,lon:a.lon}))}`:` · ${(d/1609).toFixed(1)} mi`};
+function transfer(fromCap,toCap,pts,mmPts){if(mmPts&&toCap.card&&fromCap?.card&&fromCap.card.serial===toCap.card.serial){const Hi=SL.H.inv(toCap.card.H);if(Hi)return mmPts.map(p=>SL.H.apply(Hi,p))}if(!pts)return null;const A=SL.H.inv(Href(fromCap));if(!A)return null;const M=SL.H.mul(Href(toCap),A);return pts.map(p=>SL.H.apply(M,p))}
+async function paintPhoto(cv,cap,a,m){const im=await getImg(cap);if(!im||!cv)return;cv.width=im.naturalWidth;cv.height=im.naturalHeight;const g=cv.getContext('2d');g.drawImage(im,0,0);
+  const rc=caps.get(a.ref);let pin=null;if(a.pin&&rc){const p=SL.H.apply(Href(cap),[a.pin.x*rc.w,a.pin.y*rc.h]);pin={x:p[0]/cap.w,y:p[1]/cap.h}}SL.Grid.draw(g,0,0,cv.width,cv.height,{pin});
+  if(cap.card){g.strokeStyle='#19c37d';g.lineWidth=3;g.beginPath();cap.card.quad.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.stroke()}
+  (m||[]).forEach(x=>{if(!x.pts)return;const[p,q]=x.pts;g.strokeStyle='#ffd60a';g.lineWidth=4;g.beginPath();g.moveTo(...p);g.lineTo(...q);g.stroke();g.font=`800 ${Math.round(cv.width/26)}px "Public Sans",sans-serif`;g.fillStyle='#ffd60a';g.shadowColor='#000';g.shadowBlur=8;g.fillText(`${x.label} ${inch(x.mm)}`,Math.max(p[0],q[0])+14,(p[1]+q[1])/2);g.shadowBlur=0})}
+
+/* ---------- map ---------- */
+function mark(a){const c=COND[a.cond][1],r=17,x=a.x,y=a.y;let s;
+  if(a.type==='inlet')s=`<rect x="${x-r}" y="${y-r}" width="${2*r}" height="${2*r}" rx="5" fill="${c}" stroke="#fff" stroke-width="3"/><path d="M${x-9} ${y-6}h18M${x-9} ${y}h18M${x-9} ${y+6}h18" stroke="#fff" stroke-width="2.5"/>`;
+  else if(a.type==='outfall')s=`<path d="M${x} ${y-r-3}L${x+r+3} ${y+r}H${x-r-3}Z" fill="${c}" stroke="#fff" stroke-width="3"/>`;
+  else if(a.type==='pond'||a.type==='structure')s=`<path d="M${x} ${y-r-3}L${x+r+3} ${y}L${x} ${y+r+3}L${x-r-3} ${y}Z" fill="${c}" stroke="#fff" stroke-width="3"/>`;
+  else s=`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" stroke="#fff" stroke-width="3"/>${a.type==='ditch'?`<path d="M${x-9} ${y+2}q4.5-8 9 0t9 0" fill="none" stroke="#fff" stroke-width="2.5"/>`:`<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="#fff" stroke-width="2.5"/>`}`;
+  return`<g data-asset="${a.id}" style="cursor:pointer" role="button" aria-label="${esc(a.id)} ${esc(a.name)}"><circle cx="${x}" cy="${y}" r="30" fill="transparent"/>${s}${a.ref?`<circle cx="${x+r}" cy="${y-r}" r="7" fill="#fff" stroke="${c}" stroke-width="2.5"/>`:''}${a.cond>=4?`<text x="${x}" y="${y-r-12}" text-anchor="middle" font-size="15" font-weight="800" fill="var(--ink)" paint-order="stroke" stroke="var(--bg)" stroke-width="4">${a.id}</text>`:''}</g>`}
+function planSVG(){const lots=[];for(let i=0;i<7;i++)lots.push([110+i*110,190,90,80],[110+i*110,350,90,90]);const meXY=me?toXY(me):null;
+  return`<svg id="dmap" viewBox="0 0 1000 700" style="width:${zoom*100}%;min-width:${720*zoom}px" role="img" aria-label="Neighborhood drainage map"><rect width="1000" height="700" fill="var(--grass)"/>
+  ${meta.sample?lots.map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="var(--lot)" stroke="var(--line)"/><rect x="${x+25}" y="${y+(y<300?18:30)}" width="40" height="34" rx="3" fill="var(--house)"/>`).join(''):''}
+  ${meta.sample?`<path d="M600 0 C 640 120 560 260 610 420 S 720 560 700 700" fill="none" stroke="var(--water)" stroke-width="26" stroke-linecap="round"/><ellipse cx="820" cy="560" rx="120" ry="62" fill="var(--water)" stroke="#6aa9b3" stroke-width="3"/>`:`${Array.from({length:11},(_,i)=>`<line x1="${i*100}" y1="0" x2="${i*100}" y2="700" stroke="var(--line)"/>`).join('')}${Array.from({length:8},(_,i)=>`<line x1="0" y1="${i*100}" x2="1000" y2="${i*100}" stroke="var(--line)"/>`).join('')}<text x="960" y="40" font-size="20" font-weight="800" fill="var(--mute)">N ↑</text><text x="20" y="690" font-size="16" fill="var(--mute)">Grid squares ≈ 100 ft</text>`}
+  ${meta.sample?`<path d="M0 315 H1000" stroke="var(--road)" stroke-width="44"/><path d="M0 315 H1000" stroke="var(--bg)" stroke-width="2" stroke-dasharray="18 14"/><path d="M470 315 V110" stroke="var(--road)" stroke-width="38"/><circle cx="470" cy="100" r="44" fill="var(--road)"/>
+  <path d="M120 600 C 300 575 520 610 700 540" fill="none" stroke="#7cae84" stroke-width="10" stroke-dasharray="2 10" stroke-linecap="round"/>
+  <g font-size="18" font-weight="600" fill="var(--mute)"><text x="40" y="300">Ridgeview Dr</text><text x="488" y="215" transform="rotate(-90 488 215)">Laurel Ct</text><text x="640" y="70" font-style="italic">Mill Branch</text><text x="770" y="636">Pond</text></g>`:''}
+  ${floods.map(f=>`<g data-flood="${f.id}" style="cursor:pointer"><path d="M${f.x} ${f.y-22}c10 14 15 21 15 29a15 15 0 0 1-30 0c0-8 5-15 15-29z" fill="#2563eb" stroke="#fff" stroke-width="2.5"/></g>`).join('')}
+  ${assets.map(mark).join('')}${meXY&&meXY.x>-50&&meXY.x<1050&&meXY.y>-50&&meXY.y<750?`<circle cx="${meXY.x}" cy="${meXY.y}" r="11" fill="#2563eb" stroke="#fff" stroke-width="4"/>`:''}</svg>`}
+function vMap(){const bad=assets.filter(a=>a.cond>=4).length;
+  return`<div class="row" style="margin-bottom:10px"><div class="sp"><h2>${esc(meta.hoa)}</h2><div class="mute">${assets.length} asset${assets.length===1?'':'s'} · ${bad} poor or failed · ${assets.filter(a=>a.ref).length} photo point${assets.filter(a=>a.ref).length===1?'':'s'} · ${floods.length} flood report${floods.length===1?'':'s'}</div></div></div>
+  ${mode?`<div class="hint">${mode==='add'?'Tap the map where the new asset is.':'Tap where the water was.'} <button class="ghost" data-act="cancelmode" style="color:#fff;text-decoration:underline">Cancel</button></div>`:''}
+  ${tilesOK?`<div class="seg" style="margin-bottom:8px"><button data-mk="plan" aria-pressed="${mapKind==='plan'}">Plan</button><button data-mk="gps" aria-pressed="${mapKind==='gps'}">Street map</button></div>`:''}
+  ${mapKind==='gps'&&tilesOK?'<div id="lmap" role="img" aria-label="Street map of assets"></div>':`<div class="stage" id="stage">${planSVG()}</div>`}
+  <div class="row" style="margin-top:8px">${mapKind==='plan'?'<button data-z="-1" aria-label="Zoom out">−</button><button data-z="1" aria-label="Zoom in">+</button>':''}<span class="sp"></span><button data-act="scantag">Scan a tag</button><button data-act="addmode" class="pri">Add asset</button></div>
+  <div class="legend">${COND.slice(1).map((c,i)=>`<span><i style="background:${c[1]}"></i>${i+1} ${c[0]}</span>`).join('')}<span><i style="background:#2563eb"></i>Flooding</span><span><i style="background:#fff;border:2px solid var(--mute)"></i>Photo point</span></div>
+  <p class="mute">${tilesOK?'Street map uses each asset\'s GPS fix.':'Street map and your live position turn on once the app is opened from its own web address.'} Squares are inlets, circles pipes and ditches, triangles outfalls, diamonds ponds.</p>`}
+function mountLeaflet(){const el=$('#lmap');if(!el||!window.L)return;if(lmap){lmap.remove();lmap=null}
+  lmap=L.map(el,{zoomControl:true}).setView(me&&!assets.length?[me.lat,me.lon]:[toGeo(500,350).lat,toGeo(500,350).lon],17);if(assets.length>1)lmap.fitBounds(assets.map(a=>[a.lat,a.lon]),{padding:[30,30],maxZoom:18});L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(lmap);
+  assets.forEach(a=>L.circleMarker([a.lat,a.lon],{radius:10,color:'#fff',weight:3,fillColor:COND[a.cond][1],fillOpacity:1}).addTo(lmap).on('click',()=>openAsset(a.id)).bindTooltip(a.id));
+  floods.forEach(f=>L.circleMarker([f.lat,f.lon],{radius:8,color:'#fff',weight:2,fillColor:'#2563eb',fillOpacity:1}).addTo(lmap).bindTooltip(f.depth));
+  if(me)L.circleMarker([me.lat,me.lon],{radius:9,color:'#fff',weight:4,fillColor:'#2563eb',fillOpacity:1}).addTo(lmap).bindTooltip('You');
+  lmap.on('click',e=>{if(mode){const m=mode;mode=null;render();const xy=toXY({lat:e.latlng.lat,lon:e.latlng.lng});m==='add'?newAssetSheet(xy.x,xy.y):floodSheet(xy.x,xy.y)}})}
+function probeTiles(){try{const im=new Image(),t=setTimeout(()=>{im.src=''},4000);im.onload=()=>{clearTimeout(t);const s=document.createElement('script');s.src='vendor/leaflet.js';s.onload=()=>{const l=document.createElement('link');l.rel='stylesheet';l.href='vendor/leaflet.css';document.head.appendChild(l);tilesOK=true;if(!meta.sample)mapKind='gps';if(view==='map')render()};document.head.appendChild(s)};im.src='https://tile.openstreetmap.org/0/0/0.png'}catch(e){}}
+
+/* ---------- assets ---------- */
+function vAssets(){const L=assets.filter(a=>filt==='all'||(filt==='bad'?a.cond>=4:filt==='old'?overdue(a):filt==='nophoto'?!a.ref:a.owner===filt)).sort((a,b)=>me?dist(a)-dist(b):risk(b)-risk(a));
+  return`<div class="row" style="margin-bottom:10px"><h2 class="sp">Assets</h2><button data-act="scantag">Scan a tag</button></div>
+  <select id="filt" aria-label="Filter">${[['all','All, '+(me?'nearest first':'highest risk first')],['bad','Poor or failed'],['old','Not inspected in a year'],['nophoto','No photo point yet'],...OWN.map(o=>[o,'Owner: '+o])].map(([v,l])=>`<option value="${v}" ${filt===v?'selected':''}>${l}</option>`).join('')}</select>
+  <div class="card" style="margin-top:10px">${L.map(a=>{const c=capsOf(a).slice(-1)[0];return`<button class="as" data-asset="${a.id}">${c?`<img src="${c.img}" alt="">`:'<span class="noimg"></span>'}<div><b>${a.id}</b> · ${esc(a.name)}<div class="mute">${esc(a.owner)} · ${fmt(a.last)}${overdue(a)?' (over a year)':''}${dtxt(a)}</div><div>${a.issues.map(i=>`<span class="tag">${i}</span>`).join('')}${a.block?`<span class="tag">${a.block}% blocked</span>`:''}${a.tag?`<span class="tag">Tag ${a.tag}</span>`:''}</div></div>${cn(a.cond)}</button>`}).join('')||'<p class="mute">Nothing matches.</p>'}</div>`}
+function vAsset(){const a=assets.find(x=>x.id===cur);if(!a)return'<p>Not found.</p>';const C=capsOf(a),last=C[C.length-1],lh=[...a.hist].reverse().find(h=>h.cap===last?.id);
+  return`<div class="row" style="margin-bottom:6px"><button class="ghost" data-act="back">← Back</button></div>
+  <div class="row"><div class="sp"><div class="mute">${a.id} · ${TYPES[a.type]}${a.size?' · '+esc(a.size):''}${a.mat?' '+esc(a.mat.toLowerCase()):''}</div><h2>${esc(a.name)}</h2></div>${cn(a.cond)}</div>
+  <div class="mute" style="margin-bottom:10px">${COND[a.cond][0]} · ${a.block}% blocked · owner ${esc(a.owner)}${a.crit?' · failure floods a home or closes a road':''}</div>
+  ${last?`<div class="hero"><canvas id="hero" aria-label="Latest photo of ${esc(a.id)}"></canvas></div>`:`<div class="card"><b>No photo point yet</b><p class="mute" style="margin:4px 0 0">Set one up and every future inspection lines up with it: same spot, same angle.</p></div>`}
+  <div class="row" style="margin-top:10px"><button class="pri" data-act="inspectcam">${a.ref?'Inspect with camera':'Set up photo point'}</button><button data-act="inspectquick">Quick inspect</button>${C.length>1?'<button data-act="cmpasset">Compare</button>':''}</div>
+  <dl class="facts"><dt>GPS</dt><dd>${a.lat?`${a.lat.toFixed(6)}, ${a.lon.toFixed(6)}`:'Not set'}${a.geo?.acc?` ±${Math.round(a.geo.acc*3.281)} ft`:''}${dtxt(a)}</dd><dt>Photo point</dt><dd>${a.ref?`Cell ${a.pin?.cell||'–'} · phone ${a.pitch?.toFixed(0)}° tilt${a.heading!=null?`, facing ${SL.Geo.compass(a.heading)}`:''}`:'None'}</dd><dt>Spot tag</dt><dd>${a.tag?`Tag ${a.tag}`:`None <button class="ghost" data-act="assigntag" style="min-height:0;padding:0 4px">Assign</button>`}</dd><dt>Risk</dt><dd>${risk(a).toFixed(0)}${overdue(a)?' · overdue for a look':''}</dd></dl>
+  <h2 style="font-size:18px;margin:16px 0 4px">History</h2>${[...a.hist].reverse().map(h=>{const c=caps.get(h.cap);return`<div class="as" style="cursor:default">${c?`<img src="${c.img}" alt="">`:'<span class="noimg"></span>'}<div><b>${fmt(h.date)}</b> · ${COND[h.cond][0]} · ${h.block}% blocked<div class="mute">${[c?.align?`lined up ${Math.round(c.align.q*100)}%`:c?.id===a.ref?'reference photo':'',...(h.meas||[]).map(m=>`${m.label} ${inch(m.mm)}`),h.note].filter(Boolean).map(esc).join(' · ')}</div></div>${cn(h.cond)}</div>`}).join('')}
+  <div class="card" style="margin-top:14px"><b>Linked records</b>${(a.links||[]).map((l,i)=>`<div class="row" style="padding:6px 0"><span class="sp">${esc(OTHER.find(o=>o[0]===l.app)?.[1]||l.app)} · ${esc(l.id)}<span class="mute"> ${esc(l.label)}</span></span><button class="ghost" data-unlink="${i}">Remove</button></div>`).join('')||'<p class="mute" style="margin:4px 0">None yet.</p>'}
+  <div class="g2"><div><label for="la">App</label><select id="la">${OTHER.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div><div><label for="li">Record ID</label><input id="li" placeholder="s-headwall"></div></div><label for="ll">What it is</label><input id="ll" placeholder="Crack in the headwall"><div class="row" style="margin-top:8px"><button data-act="link">Add link</button><span class="sp"></span><button data-act="copyrec">Copy Field Record</button></div></div>`}
+
+/* ---------- inspection ---------- */
+function startInspect(a,cap){const L=a.hist[a.hist.length-1]||{cond:3,block:0,issues:[]};insp={a,cap,cond:L.cond,block:L.block,issues:[...(L.issues||[])],note:'',meas:[]};view='inspect';render();scrollTo(0,0)}
+function vInspect(){const I=insp,a=I.a,c=I.cap,prev=capsOf(a).filter(x=>x.id!==c?.id).slice(-1)[0];
+  return`<div class="row" style="margin-bottom:6px"><button class="ghost" data-act="cancelinsp">← Cancel</button></div><h2>Inspect ${a.id}</h2><div class="mute" style="margin-bottom:10px">${esc(a.name)}</div>
+  ${c?`<div class="row" style="margin-bottom:8px">${c.align?`<span class="badge ${c.align.q>.6?'ok':''}">Lined up with the photo point ${Math.round(c.align.q*100)}%</span>`:'<span class="badge ok">New photo point</span>'}${c.card?`<span class="badge ok">${c.card.kind==='board'?'Board':'Card'} ${String(c.card.serial).padStart(3,'0')} · measurable</span>`:''}${c.geo?`<span class="badge">GPS ±${Math.round((c.geo.acc||0)*3.281)} ft</span>`:''}</div>
+  <div id="icmp">${prev?'':'<div class="hero"><canvas id="ihero"></canvas></div>'}</div>${prev?`<p class="mute" style="margin:6px 0 0">Drag across the photo: left is ${fmt(prev.t)}, right is today.</p>`:''}`:''}
+  <div class="card" style="margin-top:12px"><label>Condition</label><div class="seg5">${[1,2,3,4,5].map(n=>`<button data-c="${n}" aria-pressed="${I.cond===n}" title="${COND[n][0]}">${n}</button>`).join('')}</div><div class="mute">${COND[I.cond][0]}</div>
+  <label>How blocked</label><div class="seg5">${[0,25,50,75,100].map(n=>`<button data-b="${n}" aria-pressed="${I.block===n}">${n}%</button>`).join('')}</div>
+  <label>Issues</label><div class="tags">${ISSUES.map(i=>`<button data-i="${i}" aria-pressed="${I.issues.includes(i)}">${i}</button>`).join('')}</div>
+  ${c?`<label>Measurements</label>${I.meas.map(m=>`<span class="tag">${m.label} ${inch(m.mm)}</span>`).join('')||`<div class="mute">${c.card?'Tap Measure to size sediment, the opening or scour.':'Put the field board in the shot to measure in inches.'}</div>`}${c.card?'<div class="row" style="margin-top:6px"><button data-act="measure">Measure</button></div>':''}`:''}
+  <label for="inote">Note</label><textarea id="inote" rows="2" placeholder="Cleared leaves off the grate">${esc(I.note)}</textarea>
+  <div class="row" style="margin-top:12px"><button class="pri" data-act="saveinsp">Save inspection</button></div></div>`}
+async function mountInspect(){const I=insp;if(!I?.cap)return;const a=I.a,c=I.cap,prev=capsOf(a).filter(x=>x.id!==c.id).slice(-1)[0];
+  if(prev){const box=$('#icmp');const[ia,ib]=await Promise.all([getImg(prev),getImg(c)]);if(!ia||!ib||!box)return;const M=SL.H.mul(Href(c),SL.H.inv(Href(prev))||I3);SL.Compare.mount(box,ia,ib,M,{mode:'swipe',grid:true})}
+  else paintPhoto($('#ihero'),c,a,I.meas)}
+async function saveInspection(){const I=insp,a=I.a,date=iso(NOW);I.note=$('#inote')?.value.trim()||'';
+  if(I.cap){caps.set(I.cap.id,I.cap);await store.put('caps',I.cap)}
+  a.hist.push({date,cond:I.cond,block:I.block,issues:I.issues,note:I.note||'Inspected',cap:I.cap?.id||null,meas:I.meas});Object.assign(a,{cond:I.cond,block:I.block,issues:I.issues,last:date});
+  if(I.cap&&!a.ref){a.ref=I.cap.id;a.pin=I.cap.pin||{x:.5,y:.5,cell:'D4'};a.geo=I.cap.geo;a.pitch=I.cap.pitch;a.roll=I.cap.roll;a.heading=I.cap.heading;if(I.cap.geo){a.lat=I.cap.geo.lat;a.lon=I.cap.geo.lon}}
+  meta.route[a.id]=new Date().toISOString();await saveA(a);await saveMeta();insp=null;cur=a.id;view='asset';render();scrollTo(0,0);toast(`${a.id} saved as ${COND[a.cond][0].toLowerCase()}`)}
+
+/* ---------- measuring (field board or card) ---------- */
+function openMeasure(){const I=insp,c=I.cap,a=I.a;let pts=[],from='';
+  for(const h of [...a.hist].reverse()){const m=(h.meas||[])[0];if(m&&h.cap){const pc=caps.get(h.cap);const p=pc&&transfer(pc,c,m.pts,m.mmPts);if(p){pts=p;from=`Gauge placed where you measured "${m.label}" on ${fmt(h.date)}.`;meas={label:m.label};break}}}
+  meas={label:meas?.label||'Sediment depth',pts,drag:-1,zoom:pts.length?2:1,from};view='measure';render();scrollTo(0,0);focusGauge()}
+function mval(){return meas.pts.length===2&&insp.cap.card?SL.Card.mm(insp.cap.card.H,meas.pts[0],meas.pts[1]):null}
+function vMeasure(){const c=insp.cap.card;return`<div class="row" style="margin-bottom:6px"><button class="ghost" data-act="backinsp">← Inspection</button></div><h2>Measure</h2>
+  <div class="row" style="margin:6px 0 10px"><span class="badge ok">${c.kind==='board'?'Board':'Card'} ${String(c.serial).padStart(3,'0')} · scale locked · ${c.tilt.toFixed(0)}° off square, corrected</span></div>${meas.from?`<p class="mute" style="margin-top:0">${meas.from} Nudge the ends to today's edges.</p>`:''}
+  <label for="mlab">What you're measuring</label><select id="mlab">${MLABEL.map(l=>`<option ${meas.label===l?'selected':''}>${l}</option>`).join('')}</select>
+  <div class="mstage" id="mstage" style="margin-top:10px"><canvas id="mcv" aria-label="Photo. Tap two points, then drag the ends"></canvas></div>
+  <div class="row" style="margin-top:8px"><button data-mz="-1" aria-label="Zoom out">−</button><span class="mute">Zoom ${meas.zoom}×</span><button data-mz="1" aria-label="Zoom in">+</button><span class="sp"></span><button data-act="clearpts">Start over</button></div>
+  <div class="card" style="margin-top:12px"><div class="mute">Length on the board's plane</div><div class="big" id="mval">${inch(mval())}</div><div class="mute">Measures true when the thing you measure is in the same plane as the board.</div><div class="row" style="margin-top:12px"><button class="pri" data-act="savemeas">Add measurement</button></div></div>`}
+function focusGauge(){const st=$('#mstage'),cv=$('#mcv');if(!st||!cv)return;const p=meas.pts.length===2?[(meas.pts[0][0]+meas.pts[1][0])/2,(meas.pts[0][1]+meas.pts[1][1])/2]:[cv.width/2,cv.height/2];st.scrollLeft=p[0]/cv.width*cv.clientWidth-st.clientWidth/2;st.scrollTop=p[1]/cv.height*cv.clientHeight-st.clientHeight/2}
+async function paintMeasure(){const cv=$('#mcv');if(!cv)return;const im=await getImg(insp.cap);cv.width=im.naturalWidth;cv.height=im.naturalHeight;cv.style.width=meas.zoom*100+'%';const g=cv.getContext('2d');g.drawImage(im,0,0);
+  const k=cv.width/Math.max(1,cv.getBoundingClientRect().width),c=insp.cap.card;g.strokeStyle='#19c37d';g.lineWidth=2*k;g.beginPath();c.quad.forEach((p,i)=>i?g.lineTo(...p):g.moveTo(...p));g.closePath();g.stroke();
+  if(meas.pts.length){g.strokeStyle='#ffd60a';g.lineWidth=2.5*k;if(meas.pts.length===2){g.beginPath();g.moveTo(...meas.pts[0]);g.lineTo(...meas.pts[1]);g.stroke()}meas.pts.forEach(p=>{g.beginPath();g.arc(p[0],p[1],7*k,0,7);g.stroke()})}
+  if(meas.drag>=0&&meas.pts[meas.drag]){const p=meas.pts[meas.drag],R=70*k,Z=3,o=R+12*k;g.save();g.beginPath();g.arc(o,o,R,0,7);g.clip();g.drawImage(im,p[0]-R/Z,p[1]-R/Z,2*R/Z,2*R/Z,12*k,12*k,2*R,2*R);g.restore();g.strokeStyle='#fff';g.lineWidth=3*k;g.beginPath();g.arc(o,o,R,0,7);g.stroke();g.strokeStyle='#ffd60a';g.lineWidth=1.5*k;g.beginPath();g.moveTo(o-10*k,o);g.lineTo(o+10*k,o);g.moveTo(o,o-10*k);g.lineTo(o,o+10*k);g.stroke()}
+  const e=$('#mval');if(e)e.textContent=inch(mval())}
+function bindMeasure(){const cv=$('#mcv'),stg=$('#mstage');if(!cv)return;const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]};let pan=null;
+  cv.addEventListener('pointerdown',e=>{const p=pos(e),k=cv.width/cv.getBoundingClientRect().width;const i=meas.pts.length<2?-1:meas.pts.map((q,j)=>[Math.hypot(q[0]-p[0],q[1]-p[1]),j]).filter(x=>x[0]<28*k).sort((x,y)=>x[0]-y[0])[0]?.[1]??-1;try{cv.setPointerCapture(e.pointerId)}catch(x){}if(i>=0){meas.drag=i;paintMeasure();return}pan={x:e.clientX,y:e.clientY,sl:stg.scrollLeft,st:stg.scrollTop,moved:false}});
+  cv.addEventListener('pointermove',e=>{if(meas.drag>=0){meas.pts[meas.drag]=pos(e);paintMeasure();return}if(pan){const dx=e.clientX-pan.x,dy=e.clientY-pan.y;if(Math.hypot(dx,dy)>6)pan.moved=true;if(pan.moved){stg.scrollLeft=pan.sl-dx;stg.scrollTop=pan.st-dy}}});
+  const end=e=>{if(meas.drag>=0){meas.drag=-1;paintMeasure();return}if(pan&&!pan.moved&&e.type==='pointerup'&&meas.pts.length<2){meas.pts.push(pos(e));paintMeasure()}pan=null};cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end)}
+
+/* ---------- camera hooks ---------- */
+async function simScene(a,fresh){const s=SAMPLES.find(x=>`${PFX[x[0]]}-${String(x[1]).padStart(2,'0')}`===a.id);const L=a.hist[a.hist.length-1]||{block:0};const sc=s?{...s[8][s[8].length-1][4]}:{};if(fresh&&sc.erosion)sc.erosion=Math.min(1,sc.erosion+.05);
+  return shoot(await scene(a.type,{seed:(s?s[1]:7)*31+a.type.length,block:Math.min(100,(L.block||0)+(fresh?10:0)),...sc,board:s?.[9]?.board,tag:s?.[9]?.tag}),SL.T.id())}
+async function inspectCam(a){const rc=caps.get(a.ref),sim=await simScene(a,true);
+  if(!rc){window.__dkScan=SL.Scanner.open({mode:'ref',needCard:false,title:'Photo point for '+a.id,sim:{img:sim,geo:{lat:a.lat,lon:a.lon,acc:4}},onDone:r=>r&&startInspect(a,capFrom(a,r))});return}
+  window.__dkScan=SL.Scanner.open({mode:'return',title:'Inspect '+a.id,ref:{img:rc.img,w:rc.w,h:rc.h,card:rc.card,geo:a.geo||{lat:a.lat,lon:a.lon},pitch:a.pitch,roll:a.roll,heading:a.heading,pin:a.pin,zoom:rc.zoom},sim:{img:sim,geo:a.geo},onDone:r=>r&&startInspect(a,capFrom(a,r))})}
+function capFrom(a,r){return{id:a.id+'-'+Date.now().toString(36),spot:a.id,app:APP,t:r.t,img:r.img,w:r.w,h:r.h,geo:r.geo,pitch:r.pitch,roll:r.roll,heading:r.heading,zoom:r.zoom,card:r.card,align:r.align||null,how:r.how,pin:r.pin,exif:r.exif,tags:r.tags}}
+async function scanTag(){const sim=await tagCloseup(201);window.__dkScan=SL.Scanner.open({mode:'ref',needCard:false,tagMode:true,title:'Scan a spot tag',sim:{img:sim},onDone:r=>{if(!r)return;const id=r.tags&&r.tags[0];if(!id){toast('No tag found in that photo');return}const a=assets.find(x=>x.tag===id);if(a){toast(`Tag ${id}: ${a.id}`);openAsset(a.id)}else assignTagSheet(id)}})}
+function assignTagSheet(id){sheet(`<h2>Tag ${id} isn't assigned</h2><label for="at">Assign it to</label><select id="at">${assets.filter(a=>!a.tag).map(a=>`<option value="${a.id}">${a.id} · ${esc(a.name)}</option>`).join('')}</select><div class="row" style="margin-top:14px"><button class="pri" id="as">Assign</button><button id="ax">Cancel</button></div>`,el=>{el.querySelector('#ax').onclick=closeSheet;el.querySelector('#as').onclick=async()=>{const a=assets.find(x=>x.id===el.querySelector('#at').value);if(!a)return;a.tag=id;await saveA(a);closeSheet();openAsset(a.id);toast(`Tag ${id} now opens ${a.id}`)}})}
+function openAsset(id){cur=id;view='asset';render();scrollTo(0,0)}
+
+/* ---------- add asset / flooding ---------- */
+function newAssetSheet(x,y){sheet(`<h2>New asset</h2><label for="nt">Type</label><select id="nt">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
+  <label for="nn">Name</label><input id="nn" placeholder="Curb inlet in front of 120 Ridgeview"><div class="g2"><div><label for="no">Owner</label><select id="no">${OWN.map(o=>`<option ${o==='HOA'?'selected':''}>${o}</option>`).join('')}</select></div><div><label for="nc">Condition</label><select id="nc">${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===3?'selected':''}>${n} ${COND[n][0]}</option>`).join('')}</select></div></div>
+  <label style="display:flex;gap:10px;align-items:center;font-weight:400;font-size:16px;margin-top:12px"><input type="checkbox" id="ncr" style="width:22px;min-height:22px"> If this fails, a home floods or a road closes</label>
+  <div class="row" style="margin-top:14px"><button class="pri" id="ns">Add and set up photo point</button><button id="nx">Cancel</button></div>`,el=>{el.querySelector('#nx').onclick=closeSheet;el.querySelector('#ns').onclick=async()=>{const type=el.querySelector('#nt').value,name=el.querySelector('#nn').value.trim();if(!name){toast('Give it a name');return}
+  if(me&&!meta.g0&&!meta.sample){meta.g0={lat:me.lat+350*2.7e-6,lon:me.lon-500*3.29e-6};await saveMeta();const xy=toXY(me);x=xy.x;y=xy.y}const n=assets.filter(a=>a.type===type).length+1,cond=+el.querySelector('#nc').value,g=me||toGeo(x,y);const a={id:`${PFX[type]}-${String(n).padStart(2,'0')}`,app:APP,kind:'asset',type,name,x:Math.round(x),y:Math.round(y),lat:g.lat,lon:g.lon,cond,block:0,issues:[],owner:el.querySelector('#no').value,crit:el.querySelector('#ncr').checked,last:iso(NOW),hist:[{date:iso(NOW),cond,block:0,issues:[],note:'Added to inventory',cap:null,meas:[]}],links:[],tag:null};
+  assets.push(a);await saveA(a);closeSheet();cur=a.id;view='asset';render();inspectCam(a)}})}
+function floodSheet(x,y){let photo=null;sheet(`<h2>Report flooding</h2><label for="fd">How deep, and where</label><input id="fd" placeholder="6 in across the road"><label for="fn">What happened</label><textarea id="fn" rows="3" placeholder="Started 20 minutes into the storm, cleared by 9 pm"></textarea>
+  <label class="btn" style="display:inline-flex;align-items:center;margin-top:10px">Add photo<input type="file" accept="image/*" capture="environment" id="fp" hidden></label> <span class="mute" id="fpn"></span>
+  <div class="row" style="margin-top:14px"><button class="pri" id="fs">Save report</button><button id="fx">Cancel</button></div>`,el=>{el.querySelector('#fx').onclick=closeSheet;
+  el.querySelector('#fp').onchange=async e=>{const f=e.target.files[0];if(!f)return;const buf=await f.arrayBuffer(),ex=SL.Exif.read(buf),url=URL.createObjectURL(f),im=await SL.img(url);photo={img:SL.toJPEG(im,1200),exif:ex};URL.revokeObjectURL(url);if(ex.lat!=null){const xy=toXY(ex);x=xy.x;y=xy.y}el.querySelector('#fpn').textContent=ex.lat!=null?`Photo placed by its own GPS (${ex.lat.toFixed(5)}, ${ex.lon.toFixed(5)})`:'Photo attached'};
+  el.querySelector('#fs').onclick=async()=>{const g=me||toGeo(x,y),f={id:'flood-'+Date.now().toString(36),app:APP,kind:'flood',x:Math.round(x),y:Math.round(y),lat:g.lat,lon:g.lon,depth:el.querySelector('#fd').value.trim()||'Not measured',note:el.querySelector('#fn').value.trim(),date:iso(NOW),photo:photo?.img||null};floods.push(f);await store.put('spots',f);closeSheet();render();toast('Flood report saved with today\'s date')}})}
+
+/* ---------- storm, compare, report ---------- */
+function routeOrder(){const R=assets.filter(onRoute);if(!me)return R.sort((a,b)=>risk(b)-risk(a));const out=[];let p=me,left=[...R];while(left.length){left.sort((a,b)=>SL.Geo.dist(p,a)-SL.Geo.dist(p,b));const n=left.shift();out.push(n);p={lat:n.lat,lon:n.lon}}return out}
+function vStorm(){const R=routeOrder(),done=R.filter(a=>meta.route[a.id]).length;
+  return`<div class="card"><div class="mute">Storm coming</div><div class="row" style="align-items:flex-end"><div class="big sp">${meta.forecast.inches} in</div><div class="mute">${fmt(meta.forecast.date)}</div></div>
+  <div class="g2"><div><label for="fi">Forecast rain (in)</label><input id="fi" type="number" step="0.25" inputmode="decimal" value="${meta.forecast.inches}"></div><div><label for="fdt">Date</label><input id="fdt" type="date" value="${meta.forecast.date}"></div></div></div>
+  <div class="card"><div class="row"><h2 class="sp">Pre-storm route</h2><span class="mute">${done} of ${R.length} done</span></div><p class="mute" style="margin-top:0">${me?'Nearest first, then the next nearest from there.':'Highest risk first. With GPS on, the route reorders by walking distance.'}</p>
+  ${R.map((a,i)=>`<div class="chk"><input type="checkbox" data-route="${a.id}" ${meta.route[a.id]?'checked':''} aria-label="Done ${a.id}"><button style="all:unset;cursor:pointer" data-asset="${a.id}"><b>${i+1}. ${a.id}</b> · ${esc(a.name)}<div class="mute">${a.issues.join(', ')||COND[a.cond][0]}${a.block?`, ${a.block}% blocked`:''}${dtxt(a)}</div></button><button class="pri" data-cam="${a.id}" style="min-height:40px;padding:6px 12px">Inspect</button></div>`).join('')}</div>
+  <div class="card"><div class="row"><h2 class="sp">After the storm</h2><button data-act="floodmode">Report flooding</button></div>${floods.map(f=>`<div class="chk" style="grid-template-columns:auto minmax(0,1fr)">${f.photo?`<img src="${f.photo}" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:8px">`:'<span class="cn" style="background:#2563eb">≈</span>'}<div><b>${fmt(f.date)}</b> · ${esc(f.depth)}<div class="mute">${esc(f.note)}</div></div></div>`).join('')}<p class="mute" style="margin-bottom:0">Dated, GPS-placed flood reports with photos are the record a county or insurer asks for.</p></div>
+  <button class="ghost" data-act="clearroute">Start a new route</button>`}
+function vCompare(){const A=assets.filter(a=>capsOf(a).length>1);if(!A.length)return'<h2>Compare</h2><p class="mute">Inspect an asset with the camera twice to compare.</p>';const a=A.find(x=>x.id===cmp?.asset)||A[0],C=capsOf(a);
+  if(!cmp||cmp.asset!==a.id)cmp={asset:a.id,a:C[0].id,b:C[C.length-1].id,mode:'swipe',grid:true};const opt=v=>C.map(c=>`<option value="${c.id}" ${v===c.id?'selected':''}>${fmt(c.t)}${c.id===a.ref?' (reference)':''}</option>`).join('');
+  return`<h2>Compare inspections</h2><div class="card"><label for="ca0">Asset</label><select id="ca0">${A.map(x=>`<option value="${x.id}" ${x.id===a.id?'selected':''}>${x.id} · ${esc(x.name)}</option>`).join('')}</select>
+  <div class="g2"><div><label for="ca">Before</label><select id="ca">${opt(cmp.a)}</select></div><div><label for="cb">After</label><select id="cb">${opt(cmp.b)}</select></div></div>
+  <div class="seg" style="margin-top:12px">${[['swipe','Swipe'],['fade','Fade'],['flicker','Flicker'],['diff','Difference']].map(([k,l])=>`<button data-mode="${k}" aria-pressed="${cmp.mode===k}">${l}</button>`).join('')}</div>
+  <div id="cmpbox" style="margin-top:12px"><div class="loading" style="min-height:200px">Lining up…</div></div><p class="mute" style="margin-bottom:0">Both photos were taken from the same photo point, so sediment, debris and scour changes line up pixel for pixel.</p></div>`}
+async function mountCompare(){const box=$('#cmpbox');if(!box||!cmp)return;const A=caps.get(cmp.a),B=caps.get(cmp.b);const[ia,ib]=await Promise.all([getImg(A.id),getImg(B.id)]);const M=SL.H.mul(Href(B),SL.H.inv(Href(A))||I3);cmp.api&&cmp.api.destroy();cmp.api=SL.Compare.mount(box,ia,ib,M,{mode:cmp.mode,grid:cmp.grid})}
+function reportText(){const by=n=>assets.filter(a=>a.cond===n).length,top=assets.filter(a=>a.cond>=4).sort((a,b)=>risk(b)-risk(a));
+  return`${meta.hoa}: drainage condition report, ${fmt(iso(NOW))}\n\n${assets.length} assets (${assets.filter(a=>a.ref).length} with photo points): ${[1,2,3,4,5].map(n=>`${by(n)} ${COND[n][0].toLowerCase()}`).join(', ')}\n\nNeeds work:\n${top.map(a=>{const m=(a.hist[a.hist.length-1].meas||[]).map(x=>`${x.label} ${inch(x.mm)}`).join(', ');return`- ${a.id} ${a.name} (${COND[a.cond][0]}, ${a.block}% blocked${m?', '+m:''}; owner ${a.owner}; GPS ${a.lat.toFixed(5)}, ${a.lon.toFixed(5)}): ${a.issues.join(', ')||'see notes'}`}).join('\n')}\n\nOwner unknown: ${assets.filter(a=>a.owner==='Unknown').map(a=>a.id).join(', ')||'none'}\nNot inspected in a year: ${assets.filter(overdue).map(a=>a.id).join(', ')||'none'}\nFlood reports on file: ${floods.length}`}
+function vReport(){const n=assets.length,by=k=>assets.filter(a=>a.cond===k).length,top=assets.filter(a=>a.cond>=4).sort((a,b)=>risk(b)-risk(a)),unk=assets.filter(a=>a.owner==='Unknown'),old=assets.filter(overdue),owners=OWN.map(o=>[o,assets.filter(a=>a.owner===o&&a.cond>=4).length]).filter(x=>x[1]);
+  return`<div class="card"><div class="mute">For the board meeting</div><div class="big">${top.length} of ${n}</div><p style="margin:6px 0 10px">assets are poor or failed.</p>${[5,4,3,2,1].map(k=>`<div class="bar"><span>${k} ${COND[k][0]}</span><div style="width:${by(k)/n*100}%;background:${COND[k][1]};min-width:${by(k)?4:0}px"></div><b>${by(k)}</b></div>`).join('')}</div>
+  <div class="card"><h2>Needs work</h2>${top.map(a=>{const c=capsOf(a).slice(-1)[0];return`<button class="as" data-asset="${a.id}">${c?`<img src="${c.img}" alt="">`:'<span class="noimg"></span>'}<div><b>${a.id}</b> · ${esc(a.name)}<div class="mute">${a.issues.join(', ')}${a.block?`, ${a.block}% blocked`:''}</div></div><span class="tag">${esc(a.owner)}</span></button>`}).join('')}</div>
+  <div class="card"><h2>Whose problem is it</h2>${owners.map(([o,c])=>`<div class="bar"><span>${o}</span><div style="width:${c/top.length*100}%;background:var(--tl)"></div><b>${c}</b></div>`).join('')}${unk.length?`<p style="margin-bottom:0"><b>Owner unknown:</b> ${unk.map(a=>a.id).join(', ')}. Check the plat and easements before spending HOA money.</p>`:''}</div>
+  <div class="card"><h2>Overdue for a look</h2><p style="margin:0">${old.length?old.map(a=>`<span class="tag">${a.id}</span>`).join(''):'Everything was inspected in the last year.'}</p></div>
+  <div class="row" style="margin-bottom:14px"><button class="pri" data-act="copyrep">Copy report text</button></div>
+  <div class="card"><h2>Print kit</h2><p class="mute" style="margin-top:0">The field board gives outdoor photos a true scale for sediment, openings and scour. Spot tags stick to headwalls and risers; scanning one opens that asset.</p><div class="print">${SL.Card.svg(40,'DRAIN KEEPER')}</div><div class="tagsheet" style="margin-top:10px">${[201,202,203,204,205].map(i=>`<div class="print">${SL.Card.tagSVG(i,'Drain Keeper')}</div>`).join('')}</div><div class="row" style="margin-top:10px"><button data-act="copyboard">Copy board (SVG)</button><button data-act="copytags">Copy tag sheet (SVG)</button></div></div>
+  <div class="card"><h2>Bring in a Field Record</h2><p class="mute" style="margin-top:0">Paste an asset copied from Drain Keeper on another phone, or a record from another LyfEscapes app to link it.</p><textarea id="imp" rows="3" placeholder='{"fieldRecord":1,…}'></textarea><div class="row" style="margin-top:8px"><button data-act="import">Import</button></div><p class="mute" id="found" style="margin-bottom:0"></p></div>
+  <button class="ghost" data-act="reset">Erase everything on this phone</button> <a class="mute" href="privacy.html">Privacy</a>`}
+
+/* ---------- render & events ---------- */
+let mapScroll=null;
+function render(){if(!started){$('#view').innerHTML=`<div style="display:grid;gap:12px;padding:8px 0"><h2>Welcome to Drain Keeper</h2><p style="margin:0">Map every pipe, inlet, ditch and pond, give each one a photo point you can return to exactly, and hand the board a condition report that says whose problem each one is.</p><label for="hoaname">Your HOA or town</label><input id="hoaname" placeholder="Ridgeview Commons HOA"><button class="pri" data-act="fresh">Start my inventory</button><button data-act="sample">Explore with a sample neighborhood</button><p class="mute">Everything stays on this phone. <a href="privacy.html">Privacy</a></p></div>`;document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current','false'));return}const st0=$('#stage');if(st0)mapScroll=[st0.scrollLeft,st0.scrollTop];
+  $('#view').innerHTML=view==='map'?vMap():view==='assets'?vAssets():view==='storm'?vStorm():view==='compare'?vCompare():view==='report'?vReport():view==='asset'?vAsset():view==='inspect'?vInspect():view==='measure'?vMeasure():'';
+  const tab={asset:'assets',inspect:'assets',measure:'assets'}[view]||view;document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===tab));
+  const st=$('#stage');if(st){if(mapScroll){st.scrollLeft=mapScroll[0];st.scrollTop=mapScroll[1]}else st.scrollLeft=(st.scrollWidth-st.clientWidth)*.6}
+  if(view==='map'&&mapKind==='gps')mountLeaflet();
+  if(view==='asset'){const a=assets.find(x=>x.id===cur),C=a&&capsOf(a),last=C&&C[C.length-1];if(last)paintPhoto($('#hero'),last,a,(a.hist.find(h=>h.cap===last.id)||{}).meas)}
+  if(view==='inspect')mountInspect();
+  if(view==='measure'){paintMeasure().then(focusGauge);bindMeasure()}
+  if(view==='compare')mountCompare();
+  if(view==='report')findOthers();
+  try{history.replaceState(null,'',view==='asset'?'#asset-'+cur:['map','assets','storm','compare','report'].includes(view)?'#'+view:location.pathname)}catch(e){}}
+async function findOthers(){const e=$('#found');if(!e)return;const o=(await store.all('spots')).filter(x=>x.app!==APP);e.textContent=o.length?`${o.length} record${o.length>1?'s':''} from your other apps on this device.`:'Your other LyfEscapes apps show up here once they share this web address or install on this phone.'}
+document.addEventListener('click',async e=>{if(e.target.closest('#sheet')||e.target.closest('.sl-root'))return;
+  const svg=e.target.closest('#dmap');if(svg&&mode){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse()),m=mode;mode=null;render();m==='add'?newAssetSheet(q.x,q.y):floodSheet(q.x,q.y);return}
+  const g=e.target.closest('[data-asset]');if(g){openAsset(g.dataset.asset);return}
+  const fl=e.target.closest('[data-flood]');if(fl){const f=floods.find(x=>x.id===fl.dataset.flood);f&&toast(`${fmt(f.date)}: ${f.depth}`);return}
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.v){if(!started)return;view=b.dataset.v;mode=null;render();scrollTo(0,0);return}
+  if(b.dataset.z){zoom=Math.min(2.5,Math.max(1,zoom+ +b.dataset.z*.5));render();return}
+  if(b.dataset.mk){mapKind=b.dataset.mk;render();return}
+  if(b.dataset.cam){inspectCam(assets.find(a=>a.id===b.dataset.cam));return}
+  if(b.dataset.c&&insp){insp.cond=+b.dataset.c;insp.note=$('#inote')?.value||insp.note;const y=scrollY;render();scrollTo(0,y);return}
+  if(b.dataset.b&&insp){insp.block=+b.dataset.b;insp.note=$('#inote')?.value||insp.note;const y=scrollY;render();scrollTo(0,y);return}
+  if(b.dataset.i&&insp){const i=b.dataset.i;insp.issues=insp.issues.includes(i)?insp.issues.filter(x=>x!==i):[...insp.issues,i];insp.note=$('#inote')?.value||insp.note;const y=scrollY;render();scrollTo(0,y);return}
+  if(b.dataset.mz){meas.zoom=Math.min(4,Math.max(1,meas.zoom+ +b.dataset.mz));render();return}
+  if(b.dataset.mode){cmp.mode=b.dataset.mode;document.querySelectorAll('[data-mode]').forEach(x=>x.setAttribute('aria-pressed',x===b));cmp.api&&cmp.api.set('mode',cmp.mode);return}
+  if(b.dataset.unlink!=null){const a=assets.find(x=>x.id===cur);a.links.splice(+b.dataset.unlink,1);await saveA(a);render();return}
+  const act=b.dataset.act,a=assets.find(x=>x.id===cur);
+  if(act==='fresh'){meta.hoa=$('#hoaname')?.value.trim()||'My neighborhood';await saveMeta();await store.put('kv',{k:'dk-started',v:1});started=true;view='map';render();return}
+  if(act==='sample'){$('#view').innerHTML='<div class="loading">Setting up the sample neighborhood…</div>';await seed();await load();started=true;view='map';render();return}
+  if(!started)return;
+  if(act==='addmode'){if(me){newAssetSheet(toXY(me).x,toXY(me).y);return}mode='add';view='map';render()}
+  if(act==='floodmode'){if(me){floodSheet(toXY(me).x,toXY(me).y);return}mode='flood';view='map';render();scrollTo(0,0)}
+  if(act==='cancelmode'){mode=null;render()}
+  if(act==='scantag')scanTag();
+  if(act==='back'){view='assets';render()}
+  if(act==='inspectcam')inspectCam(a);
+  if(act==='inspectquick')startInspect(a,null);
+  if(act==='cmpasset'){cmp={asset:a.id,a:null};const C=capsOf(a);cmp={asset:a.id,a:C[0].id,b:C[C.length-1].id,mode:'swipe',grid:true};view='compare';render();scrollTo(0,0)}
+  if(act==='assigntag'){const used=new Set(assets.map(x=>x.tag));const id=[...Array(49).keys()].map(i=>201+i).find(i=>!used.has(i));a.tag=id;await saveA(a);render();toast(`Tag ${id} assigned. Print it from Report`)}
+  if(act==='link'){const id=$('#li').value.trim();if(!id){toast('Add the record ID');return}a.links=a.links||[];a.links.push({app:$('#la').value,id,label:$('#ll').value.trim()});await saveA(a);render();toast('Linked')}
+  if(act==='copyrec')copy(SL.Record.pack(APP,a,capsOf(a)),'Field Record copied, with photos');
+  if(act==='cancelinsp'){insp=null;view='asset';render()}
+  if(act==='saveinsp')saveInspection();
+  if(act==='measure'){insp.note=$('#inote')?.value||insp.note;openMeasure()}
+  if(act==='backinsp'){view='inspect';render()}
+  if(act==='clearpts'){meas.pts=[];meas.from='';render()}
+  if(act==='savemeas'){const v=mval();if(v==null){toast('Place both ends first');return}insp.meas=insp.meas.filter(m=>m.label!==meas.label);insp.meas.push({label:meas.label,mm:v,pts:meas.pts.map(p=>[...p]),mmPts:meas.pts.map(p=>SL.H.apply(insp.cap.card.H,p))});view='inspect';render();toast(`${meas.label} ${inch(v)}`)}
+  if(act==='clearroute'){meta.route={};await saveMeta();render();toast('Route reset')}
+  if(act==='copyrep')copy(reportText(),'Report copied');
+  if(act==='copyboard')copy(SL.Card.svg(40,'DRAIN KEEPER'),'Board file copied');
+  if(act==='copytags')copy(`<svg xmlns="http://www.w3.org/2000/svg" width="162mm" height="40mm" viewBox="0 0 162 40">${[201,202,203,204,205].map((i,k)=>SL.Card.tagSVG(i,'Drain Keeper').replace('<svg ',`<svg x="${k*32+1}" y="1" `)).join('')}</svg>`,'Tag sheet copied');
+  if(act==='import'){try{const o=SL.Record.unpack($('#imp').value);if(o.app!==APP){toast(`That's a ${o.app} record. Open an asset and link it there.`);return}const x=o.spot;x.id=x.id.replace(/-i\w+$/,'')+'-i'+Date.now().toString(36).slice(-3);const map={};for(const c of o.caps||[]){const nid=x.id+'-'+c.id.split('-').pop();map[c.id]=nid;c.id=nid;c.spot=x.id;caps.set(nid,c);await store.put('caps',c)}x.ref=map[x.ref]||x.ref;x.hist.forEach(h=>h.cap=map[h.cap]||h.cap);assets.push(x);await saveA(x);openAsset(x.id);toast('Imported '+x.id)}catch(err){toast('That isn\'t a Field Record')}}
+  if(act==='reset'){if(b.textContent!=='Tap again to reset'){b.textContent='Tap again to reset';return}for(const c of caps.values())await store.del('caps',c.id);for(const x of [...assets,...floods])await store.del('spots',x.id);await store.del('kv','dk-seeded');await store.del('kv','dk-started');caps.clear();imgCache.clear();assets=[];floods=[];started=false;render()}
+});
+document.addEventListener('change',async e=>{const t=e.target;if(t.closest('#sheet')||t.closest('.sl-root'))return;
+  if(t.id==='filt'){filt=t.value;render()}
+  if(t.dataset.route){if(t.checked)meta.route[t.dataset.route]=new Date().toISOString();else delete meta.route[t.dataset.route];await saveMeta();render()}
+  if(t.id==='fi'){meta.forecast.inches=parseFloat(t.value)||0;await saveMeta();render()}
+  if(t.id==='fdt'){meta.forecast.date=t.value;await saveMeta();render()}
+  if(t.id==='mlab'){meas.label=t.value}
+  if(t.id==='ca0'){cmp=null;cmp={asset:t.value};const a=assets.find(x=>x.id===t.value),C=capsOf(a);cmp={asset:a.id,a:C[0].id,b:C[C.length-1].id,mode:'swipe',grid:true};render()}
+  if(t.id==='ca'||t.id==='cb'){cmp[t.id==='ca'?'a':'b']=t.value;render()}
+});
+SL.Geo.watch(g=>{if(g.err)return;const first=!me;me=g;if(first&&['map','assets','storm'].includes(view))render()});
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!/claude/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+(async()=>{try{await load()}catch(err){$('#view').innerHTML='<p>Could not set up the sample on this device.</p>';return}
+  const h=location.hash.slice(1);if(h.startsWith('asset-')&&assets.some(a=>a.id===h.slice(6))){cur=h.slice(6);view='asset'}else if(['assets','storm','compare','report'].includes(h))view=h;render();probeTiles()})();
+}
+</script>
+</body>
+</html>

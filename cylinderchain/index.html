@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#36352f">
+<title>Cylinder Chain</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* VOICE: lab-grade record keeping for concrete QA, exact and calm, red only when a break comes in low
+   IDEA: the field tag on a 4x8 cylinder mold, with an ID that follows the cylinder from truck to press
+   PICTURE: each set drawn as a row of cylinders filling with its break result against f'c
+   COLOUR and TYPE: concrete greys, cobalt for actions and IDs, red for low breaks; IBM Plex Sans + Plex Mono for IDs
+   LAYOUT: one app column, bottom tabs, project acceptance up top */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#121314);--card:light-dark(#efeeeb,#1d1f21);--ink:light-dark(#1a1b1d,#ececea);--mute:light-dark(#5e5f62,#a2a4a8);--line:light-dark(#dcdad5,#34373a);--co:#2346d6;--bad:#d62f2f;--cyl:light-dark(#c9c6bf,#4a4d51)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "IBM Plex Sans",system-ui,sans-serif;overflow-x:clip}
+header{background:linear-gradient(135deg,#6b6965,#36352f);color:#fff;padding:20px max(5vw,16px) 22px}
+header .in,main{max-width:720px;margin:0 auto}
+h1{font-size:38px;line-height:1.05;margin:2px 0 4px;font-weight:700}h2{font-size:22px;line-height:1.15;margin:0 0 6px}
+header small{font-size:14px;opacity:.85}
+main{padding:16px max(4vw,14px) 110px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.mute{color:var(--mute);font-size:14px}.id{font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--co);white-space:nowrap}
+.big{font-size:clamp(32px,8.5vw,48px);font-weight:700;line-height:1;white-space:nowrap}
+button,.btn{font:600 16px "IBM Plex Sans",system-ui,sans-serif;min-height:44px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.pri{background:var(--co)!important;border-color:var(--co)!important;color:#fff!important}
+button.ghost{background:none;border:0;color:var(--co);padding:10px 4px}
+:focus-visible{outline:3px solid var(--co);outline-offset:2px}
+input,select,textarea{font:16px "IBM Plex Sans",system-ui,sans-serif;width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px}
+.pour{display:block;width:100%;text-align:left;font-weight:400}
+.flag{display:inline-block;border-radius:6px;padding:1px 8px;font-size:13px;font-weight:600;white-space:nowrap;margin:2px 4px 2px 0;background:var(--bg);border:1px solid var(--line)}
+.flag.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+table{width:100%;border-collapse:collapse;font-size:15px}td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:13px;color:var(--mute);font-weight:600}td.n,th.n{text-align:right;white-space:nowrap}
+.set{background:var(--bg);border-radius:12px;padding:12px;margin-top:10px}
+.cyls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.cy{width:52px;text-align:center;font-size:12px;cursor:pointer;background:none;border:0;padding:0;min-height:0;font-weight:600;color:var(--ink)}
+.cy .body{position:relative;height:70px;border-radius:8px 8px 6px 6px;background:var(--cyl);overflow:hidden;margin-bottom:3px;box-shadow:inset -6px 0 0 rgba(0,0,0,.08)}
+.cy .fill{position:absolute;left:0;right:0;bottom:0;background:var(--ink)}
+.cy .fill.low{background:var(--bad)}
+.cy .fc{position:absolute;left:0;right:0;height:2px;background:var(--co)}
+.chain{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:8px;font-size:12px}
+.chain div{border-top:4px solid var(--line);padding-top:4px;color:var(--mute)}
+.chain div.on{border-color:var(--co);color:var(--ink)}
+.chain div.bad{border-color:var(--bad);color:var(--bad)}
+.due{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);width:100%;text-align:left;font-weight:400;background:none;border-radius:0;border-left:0;border-right:0;border-bottom:0}
+.labels{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.lab{background:#fff;color:#111;border-radius:10px;padding:10px;border:1px solid #d6d3cc}
+.lab .q{width:96px;height:96px;margin:0 auto 6px}.lab .q svg{width:100%;height:100%;display:block}
+.lab b{font-family:"IBM Plex Mono",monospace;font-size:13px;display:block;text-align:center}
+.lab div{font-size:12px;text-align:center}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}.scrim.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto}
+nav{position:fixed;left:0;right:0;bottom:0;background:light-dark(rgba(255,255,255,.95),rgba(18,19,20,.95));border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+nav button{border:0;border-radius:0;background:none;font-size:14px;min-height:56px;color:var(--mute)}
+nav button[aria-current=true]{color:var(--co);box-shadow:inset 0 3px 0 var(--co)}
+#toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#1a1b1d;color:#fff;padding:10px 16px;border-radius:10px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;max-width:90vw}#toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+@media(max-width:600px){table{font-size:13px}}
+.welcome{display:grid;gap:12px;padding:8px 0}.tph{width:56px;height:42px;object-fit:cover;border-radius:6px;display:block;margin-top:4px;cursor:pointer}
+</style>
+</head>
+<body>
+<header><div class="in"><small>LyfEscapes · concrete QA from truck to press</small><h1>Cylinder Chain</h1><small>Records stay on this phone. Back them up from the Project tab.</small></div></header>
+<main id="view"></main>
+<nav><div class="in" id="tabs"><button data-v="pours">Pours</button><button data-v="breaks">Breaks</button><button data-v="labels">Labels</button><button data-v="project">Project</button></div></nav>
+<div class="scrim" id="scrim"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+<script src="vendor/qrcode.js"></script>
+<script src="vendor/jsQR.js"></script>
+<script src="vendor/cv.js"></script>
+<script src="vendor/aruco.js"></script>
+<script src="sitelock.js"></script>
+<script>
+{
+const KEY='cylchain.v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AREA={'4x8':Math.PI*4,'6x12':Math.PI*9};
+const PLAN={'4x8':[7,28,28,28,56],'6x12':[7,28,28,56]};
+const NOW=new Date();
+const D=n=>{const d=new Date(NOW);d.setDate(d.getDate()+n);return d};
+const iso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+const fmt=d=>new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+const fmtW=d=>new Date(d).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+const fmtT=d=>new Date(d).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+const num=v=>Math.round(v).toLocaleString();
+const mins=(a,b)=>{const[h1,m1]=a.split(':').map(Number),[h2,m2]=b.split(':').map(Number);return(h2*60+m2)-(h1*60+m1)};
+function sample(){
+  const proj={name:'Hillcrest Medical Office, Phase 1',fc:4000,size:'4x8',spec:{sMin:3,sMax:5,aMin:4.5,aMax:7.5,tMin:50,tMax:90,maxMin:90}};
+  const at=(days,h,m)=>{const d=D(-days);d.setHours(h,m,0,0);return d.toISOString()};
+  const L=psi=>psi==null?null:Math.round(psi*AREA['4x8']/10)*10;
+  const set=(id,truck,cast,tech,picked,psis)=>({id,truck,cast,tech,picked,cyl:PLAN['4x8'].map((age,i)=>({age,load:L(psis[i]),frac:psis[i]!=null?[3,2,1,3,5][i]:null}))});
+  const pour=(code,days,place,mix,yd,trucks,sets)=>({code,date:iso(D(-days)),place,mix,yd,trucks,sets});
+  return{proj,open:'P5',pours:[
+    pour('P1',40,'Footings, grid A to C','4000-F3',38,[{tk:'418822',b:'07:05',d:'08:02',s:4,a:5.8,t:61,w:0},{tk:'418831',b:'07:40',d:'08:51',s:4.5,a:6.1,t:62,w:0}],[set('S1',0,at(40,8,10),'D. Pruitt',at(39,9,30),[2960,4380,4450,4370,null])]),
+    pour('P2',33,'Foundation walls, east','4000-W2',52,[{tk:'420115',b:'06:50',d:'07:58',s:5,a:6.4,t:58,w:0},{tk:'420140',b:'07:35',d:'09:12',s:6,a:7.9,t:60,w:10}],[set('S1',0,at(33,8,5),'D. Pruitt',at(32,10,0),[2880,4150,4060,4150,null]),set('S2',1,at(33,9,20),'D. Pruitt',at(32,10,0),[2310,3420,3310,3410,null])]),
+    pour('P3',29,'Slab on grade, area 1','4000-S1',64,[{tk:'420598',b:'06:30',d:'07:44',s:4,a:5.2,t:55,w:0}],[set('S1',0,at(29,7,50),'M. Ibarra',at(28,8,15),[2990,null,null,null,null])]),
+    pour('P4',7,'Level 1 columns, lines 2 to 6','5000-C1',22,[{tk:'423377',b:'09:10',d:'10:02',s:4,a:5.5,t:66,w:0},{tk:'423391',b:'09:40',d:'11:24',s:5,a:6,t:71,w:0}],[set('S1',0,at(7,10,10),'M. Ibarra',at(6,9,0),[null,null,null,null,null]),set('S2',1,at(7,11,30),'M. Ibarra',at(5,18,40),[null,null,null,null,null])]),
+    pour('P5',1,'Level 2 deck, grid C to D / 3 to 5','4000-D2',88,[{tk:'424006',b:'06:15',d:'07:20',s:4.5,a:6.2,t:63,w:0},{tk:'424019',b:'06:45',d:'07:58',s:4,a:6,t:64,w:0}],[set('S1',0,at(1,7,30),'D. Pruitt',null,[null,null,null,null,null])])]};
+}
+const SL=window.SiteLock,store=new SL.Store('cylinderchain');let S=null,started=false,caps=new Map(),me=null;
+const blank=()=>({proj:{name:'New project',fc:4000,size:'4x8',spec:{sMin:3,sMax:5,aMin:4.5,aMax:7.5,tMin:50,tMax:90,maxMin:90}},open:null,pours:[]});
+const save=()=>store.put('kv',{k:'cc-state',v:S});
+let view='pours';
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600)}
+function copy(t,m){try{navigator.clipboard.writeText(t).then(()=>toast(m),()=>toast('Copy was blocked here'))}catch(e){toast('Copy was blocked here')}}
+function sheet(html,mount){$('#sheet').innerHTML=html;$('#scrim').classList.add('on');mount&&mount($('#sheet'))}
+const closeSheet=()=>$('#scrim').classList.remove('on');
+$('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeSheet()});
+
+const fcOf=p=>+(p.mix.match(/^(\d{4})/)?.[1]||S.proj.fc);
+const psi=c=>c.load?c.load/AREA[S.proj.size]:null;
+const cid=(p,s,i)=>`${p.code}-${s.id}-${i+1}`;
+const dueOf=(s,c)=>{const d=new Date(s.cast);d.setDate(d.getDate()+c.age);return d};
+const minFor=fc=>fc<=5000?fc-500:.9*fc;
+function tests(){const out=[];S.pours.forEach(p=>p.sets.forEach(s=>{const t=s.cyl.filter(c=>c.age===28);if(t.length&&t.every(c=>c.load)){out.push({p,s,fc:fcOf(p),avg:t.reduce((a,c)=>a+psi(c),0)/t.length,cast:s.cast})}}));
+  out.sort((a,b)=>a.cast<b.cast?-1:1);
+  out.forEach((t,i)=>{t.indOk=t.avg>=minFor(t.fc);if(i>=2){t.run=(out[i].avg+out[i-1].avg+out[i-2].avg)/3;t.runOk=t.run>=t.fc}});
+  return out}
+function truckFlags(t){const sp=S.proj.spec,f=[],m=mins(t.b,t.d);
+  f.push([`${m} min batch to discharge`,m>sp.maxMin]);f.push([`Slump ${t.s} in`,t.s<sp.sMin||t.s>sp.sMax]);f.push([`Air ${t.a}%`,t.a<sp.aMin||t.a>sp.aMax]);f.push([`${t.t}°F`,t.t<sp.tMin||t.t>sp.tMax]);if(t.w)f.push([`${t.w} gal water added`,true]);return f}
+function custody(s){const h=(new Date(s.picked||NOW)-new Date(s.cast))/36e5;const tested=s.cyl.some(c=>c.load);
+  return{h,late:h>48,steps:[['Cast',true,fmtT(s.cast)],['Field cure',true,s.picked?`${Math.round(h)} h`:`${Math.round(h)} h so far`],['At lab',!!s.picked,s.picked?fmtT(s.picked):'not picked up'],['Tested',tested,tested?`${s.cyl.filter(c=>c.load).length} of ${s.cyl.length}`:'none yet']]}}
+
+function cylDraw(p,s,c,i){const fc=fcOf(p),v=psi(c),top=fc*1.4,h=v?Math.min(100,v/top*100):0,low=v&&c.age===28&&v<minFor(fc);
+  return`<button class="cy" data-cyl="${p.code}|${s.id}|${i}" aria-label="Cylinder ${cid(p,s,i)}, ${c.age} days"><div class="body">${v?`<div class="fill ${low?'low':''}" style="height:${h}%"></div>`:''}<div class="fc" style="bottom:${fc/top*100}%"></div></div>${c.age}d<div class="mute" style="font-size:12px;font-weight:400">${v?num(v):fmt(dueOf(s,c))}</div></button>`}
+function vPours(){const T=tests(),bad=T.filter(t=>!t.indOk||t.runOk===false);
+  return`<div class="card"><div class="mute">${esc(S.proj.name)} · f'c ${num(S.proj.fc)} psi</div><div class="big" style="color:${bad.length?'var(--bad)':'inherit'}">${bad.length?`${bad.length} test${bad.length>1?'s':''} below ACI`:'All tests pass'}</div><p class="mute" style="margin:6px 0 0">${T.length} 28-day tests so far. Details on the Project tab.</p></div>
+  <div class="row" style="margin-bottom:10px"><h2 class="sp">Pours</h2><button class="pri" data-act="newpour">New pour</button></div>
+  ${S.pours.slice().reverse().map(p=>{const o=S.open===p.code,fl=p.trucks.flatMap(truckFlags).filter(f=>f[1]).length;
+  return`<div class="card"><button class="pour" style="all:unset;display:block;width:100%;cursor:pointer" data-open="${p.code}"><div class="row"><div class="sp"><b>${esc(p.place)}</b><div class="mute">${fmtW(p.date+'T12:00')} · ${esc(p.mix)} · ${p.yd} yd³ · <span class="id">${p.code}</span></div></div>${fl?`<span class="flag bad">${fl} flag${fl>1?'s':''}</span>`:''}</div></button>
+  ${o?`<table style="margin-top:10px"><thead><tr><th>Ticket</th><th>Checks</th></tr></thead><tbody>${p.trucks.map((t,i)=>`<tr><td><span class="id">${t.tk}</span><div class="mute">${t.b} to ${t.d}</div>${t.ph&&caps.get(t.ph)?`<img class="tph" src="${caps.get(t.ph).img}" alt="Ticket ${t.tk}" data-ph="${t.ph}">`:''}</td><td>${truckFlags(t).map(f=>`<span class="flag ${f[1]?'bad':''}">${f[0]}</span>`).join('')}<div><button class="ghost" data-cast="${p.code}|${i}">Cast a set from this truck</button></div></td></tr>`).join('')}</tbody></table>
+  <div class="row"><button data-addtruck="${p.code}">Add truck ticket</button></div>
+  ${p.sets.map(s=>{const k=custody(s);return`<div class="set"><div class="row"><b class="sp">Set ${s.id} · truck <span class="id">${p.trucks[s.truck]?.tk||''}</span></b>${!s.picked?`<button data-pick="${p.code}|${s.id}">Picked up</button>`:''}</div>
+   <div class="chain">${k.steps.map((st,j)=>`<div class="${j===1&&k.late?'bad':st[1]?'on':''}"><b>${st[0]}</b><br>${st[2]}</div>`).join('')}</div>
+   ${k.late?`<div class="flag bad" style="margin-top:8px">${s.picked?`Initial cure ran ${Math.round(k.h)} h, over 48`:`Over 48 h on site: pick up now`}</div>`:!s.picked?`<div class="mute" style="margin-top:6px">Pick up by ${fmtT(new Date(new Date(s.cast).getTime()+48*36e5))}</div>`:''}
+   <div class="cyls">${s.cyl.map((c,i)=>cylDraw(p,s,c,i)).join('')}</div><div class="mute" style="margin-top:4px">Blue line marks f'c. Tap a cylinder to enter its break.</div></div>`}).join('')}`:''}</div>`}).join('')}
+  <button class="ghost" data-act="reset">Erase everything on this phone</button>`}
+function vBreaks(){const rows=[];S.pours.forEach(p=>p.sets.forEach(s=>s.cyl.forEach((c,i)=>{if(!c.load)rows.push({p,s,c,i,due:dueOf(s,c)})})));
+  rows.sort((a,b)=>a.due-b.due);const t0=new Date(NOW);t0.setHours(0,0,0,0);const t1=new Date(t0);t1.setDate(t1.getDate()+1);const w=new Date(t0);w.setDate(w.getDate()+7);
+  const grp=[['Overdue',r=>r.due<t0],['Due today',r=>r.due>=t0&&r.due<t1],['Next 7 days',r=>r.due>=t1&&r.due<w],['Later',r=>r.due>=w]];
+  return`<div class="row" style="margin-bottom:8px"><h2 class="sp" style="margin:0">Breaks due</h2><button class="pri" data-act="scan">Scan a label</button></div>${grp.map(([g,f])=>{const r=rows.filter(f);return r.length?`<div class="card"><div class="row"><b class="sp" style="${g==='Overdue'?'color:var(--bad)':''}">${g}</b><span class="mute">${r.length}</span></div>${r.map(x=>`<button class="due" data-cyl="${x.p.code}|${x.s.id}|${x.i}"><div><span class="id">${cid(x.p,x.s,x.i)}</span> · ${x.c.age}-day${x.c.age===56?' hold':''}<div class="mute">${esc(x.p.place)}</div></div><div style="text-align:right;white-space:nowrap"><b>${fmtW(x.due)}</b><div class="mute">Enter load</div></div></button>`).join('')}</div>`:''}).join('')}`}
+function qrSvg(text){try{const q=qrcode(0,'M');q.addData(text);q.make();return q.createSvgTag({cellSize:2,margin:0,scalable:true})}catch(e){return`<div style="font-size:11px;padding-top:30px">${esc(text)}</div>`}}
+function vLabels(){const sets=S.pours.flatMap(p=>p.sets.map(s=>({p,s})));const pick=S.lab||`${sets[sets.length-1].p.code}|${sets[sets.length-1].s.id}`;const[pc,sid]=pick.split('|');const P=S.pours.find(p=>p.code===pc),St=P?.sets.find(s=>s.id===sid);
+  return`<div class="card"><h2>Find a cylinder</h2><p class="mute" style="margin-top:0">Scan a label with the camera, or type its ID.</p><div class="row" style="margin-bottom:8px"><button class="pri" data-act="scan">Scan a label</button></div><div class="row"><input id="find" placeholder="P2-S2-3" style="flex:1;width:auto"><button data-act="find">Open</button></div></div>
+  <div class="card"><label for="ls">Labels for</label><select id="ls">${sets.map(({p,s})=>`<option value="${p.code}|${s.id}" ${pick===p.code+'|'+s.id?'selected':''}>${p.code} set ${s.id}: ${esc(p.place)}</option>`).join('')}</select>
+  ${St?`<div class="labels" style="margin-top:12px">${St.cyl.map((c,i)=>{const id=cid(P,St,i);return`<div class="lab"><div class="q">${qrSvg(`CC|${id}|${c.age}D|${iso(dueOf(St,c))}`)}</div><b>${id}</b><div>${c.age}-day · break ${fmt(dueOf(St,c))}</div><div>${esc(P.mix)} · cast ${fmt(St.cast)}</div></div>`}).join('')}</div>`:''}
+  <div class="row" style="margin-top:12px"><button data-act="copylab">Copy label list</button></div></div>`}
+function vProject(){const T=tests(),sp=S.proj.spec;
+  const inp=(id,v,l)=>`<div><label for="${id}">${l}</label><input id="${id}" data-sp="${id}" type="number" step="any" inputmode="decimal" value="${v}"></div>`;
+  return`<div class="card"><h2>ACI acceptance</h2><p class="mute" style="margin-top:0">A test is the average of the 28-day cylinders in a set. Each test must be at least f'c − 500 psi (f'c up to 5,000) or 0.9 f'c (above 5,000), and every three tests in a row must average at least f'c.</p>
+  <table><thead><tr><th>Set</th><th class="n">Test</th><th class="n">Run of 3</th></tr></thead><tbody>${T.map(t=>`<tr><td><span class="id">${t.p.code}-${t.s.id}</span><div class="mute">${esc(t.p.place)}</div></td><td class="n" style="${t.indOk?'':'color:var(--bad);font-weight:700'}">${num(t.avg)}<div class="mute">min ${num(minFor(t.fc))}</div></td><td class="n" style="${t.runOk===false?'color:var(--bad);font-weight:700':''}">${t.run?num(t.run):'–'}<div class="mute">${t.run?'need '+num(t.fc):''}</div></td></tr>`).join('')}</tbody></table>
+  <div class="row" style="margin-top:10px"><button data-act="copysum">Copy summary for the engineer</button></div></div>
+  <div class="card"><h2>Project spec</h2><div class="g2"><div><label for="pn">Project</label><input id="pn" value="${esc(S.proj.name)}"></div><div><label for="pz">Cylinder size</label><select id="pz"><option ${S.proj.size==='4x8'?'selected':''}>4x8</option><option ${S.proj.size==='6x12'?'selected':''}>6x12</option></select></div>
+  ${inp('fc',S.proj.fc,"Default f'c (psi)")}${inp('maxMin',sp.maxMin,'Max minutes, batch to discharge')}${inp('sMin',sp.sMin,'Slump min (in)')}${inp('sMax',sp.sMax,'Slump max (in)')}${inp('aMin',sp.aMin,'Air min (%)')}${inp('aMax',sp.aMax,'Air max (%)')}${inp('tMin',sp.tMin,'Concrete temp min (°F)')}${inp('tMax',sp.tMax,'Concrete temp max (°F)')}</div>
+  <p class="mute" style="margin-bottom:0">Sample limits. Use the numbers in your project specs. A mix ID starting with a strength, like 5000-C1, sets that pour's f'c.</p></div>
+  <div class="card"><h2>Your data</h2><p class="mute" style="margin-top:0">Pours, breaks and ticket photos stay on this phone. Copy a backup and keep it somewhere safe, or move it to another phone.</p><div class="row"><button data-act="copyrec">Copy backup</button></div><label for="imp">Restore from a backup</label><textarea id="imp" rows="3" placeholder='{"fieldRecord":1,…}'></textarea><div class="row" style="margin-top:8px"><button data-act="import">Restore</button><span class="sp"></span><a class="mute" href="privacy.html">Privacy</a></div></div>`}
+
+function breakSheet(key){const[pc,sid,i]=key.split('|');const p=S.pours.find(x=>x.code===pc),s=p?.sets.find(x=>x.id===sid),c=s?.cyl[+i];if(!c){toast('No cylinder with that ID');return}
+  const fc=fcOf(p);
+  sheet(`<div class="id">${cid(p,s,+i)}</div><h2>${c.age}-day break</h2><p class="mute" style="margin-top:0">${esc(p.place)} · cast ${fmtT(s.cast)} · due ${fmtW(dueOf(s,c))} · ${S.proj.size} in, ${AREA[S.proj.size].toFixed(2)} in²</p>
+  <label for="bl">Max load (lbf)</label><input id="bl" type="number" inputmode="numeric" value="${c.load||''}">
+  <div class="big" id="bp" style="margin:12px 0 4px">–</div><div class="mute" id="bpc">psi</div>
+  <label for="bf">Fracture type (ASTM C39)</label><select id="bf">${[1,2,3,4,5,6].map(n=>`<option ${c.frac==n?'selected':''}>${n}</option>`).join('')}</select>
+  <div class="row" style="margin-top:14px"><button class="pri" id="bs">Save break</button><button id="bc">Cancel</button></div>`,el=>{
+    const upd=()=>{const L=+el.querySelector('#bl').value,v=L/AREA[S.proj.size];el.querySelector('#bp').textContent=L?num(v)+' psi':'–';el.querySelector('#bpc').textContent=L?`${Math.round(v/fc*100)}% of f'c ${num(fc)}${c.age===28&&v<minFor(fc)?' · below the ACI single-test minimum':''}`:'psi';el.querySelector('#bp').style.color=c.age===28&&L&&v<minFor(fc)?'var(--bad)':''};
+    el.querySelector('#bl').oninput=upd;upd();el.querySelector('#bl').focus();el.querySelector('#bc').onclick=closeSheet;
+    el.querySelector('#bs').onclick=()=>{const L=+el.querySelector('#bl').value;if(!(L>0)){toast('Enter the load');return}c.load=L;c.frac=+el.querySelector('#bf').value;if(!s.picked)s.picked=new Date().toISOString();save();closeSheet();S.open=p.code;render();toast(`${num(L/AREA[S.proj.size])} psi saved, ${Math.round(L/AREA[S.proj.size]/fc*100)}% of f'c`)}})}
+function pourSheet(){sheet(`<h2>New pour</h2><div class="g2"><div><label for="np">Date</label><input id="np" type="date" value="${iso(NOW)}"></div><div><label for="ny">Yards</label><input id="ny" type="number" inputmode="decimal"></div></div><label for="nl">Placement</label><input id="nl" placeholder="Level 3 deck, grid A to C"><label for="nm">Mix ID</label><input id="nm" placeholder="4000-D2">
+  <div class="row" style="margin-top:14px"><button class="pri" id="ns">Create pour</button><button id="nc">Cancel</button></div>`,el=>{el.querySelector('#nc').onclick=closeSheet;el.querySelector('#ns').onclick=()=>{const place=el.querySelector('#nl').value.trim();if(!place){toast('Add the placement');return}
+  const code='P'+(S.pours.length+1);S.pours.push({code,date:el.querySelector('#np').value,place,mix:el.querySelector('#nm').value.trim()||String(S.proj.fc),yd:+el.querySelector('#ny').value||0,trucks:[],sets:[]});S.open=code;save();closeSheet();render();toast('Pour created. Add the first truck ticket.')}})}
+function truckSheet(pc){const p=S.pours.find(x=>x.code===pc);let tph=null;sheet(`<h2>Truck ticket</h2><div class="row"><button id="tpb">Photo the ticket</button><img id="tpi" class="tph" alt="" hidden></div><div class="mute" id="tphn">The photo keeps the time and GPS of the pour.</div>
+  <div class="g2"><div><label for="tk">Ticket no.</label><input id="tk" inputmode="numeric"></div><div><label for="ts">Slump (in)</label><input id="ts" type="number" step="0.25" inputmode="decimal"></div><div><label for="tb">Batched</label><input id="tb" type="time"></div><div><label for="td">Discharge done</label><input id="td" type="time"></div><div><label for="ta">Air (%)</label><input id="ta" type="number" step="0.1" inputmode="decimal"></div><div><label for="tt">Concrete temp (°F)</label><input id="tt" type="number" inputmode="numeric"></div><div><label for="tw">Water added (gal)</label><input id="tw" type="number" inputmode="decimal" value="0"></div></div>
+  <div class="row" style="margin-top:14px"><button class="pri" id="tsv">Save ticket</button><button id="tc">Cancel</button></div>`,el=>{el.querySelector('#tc').onclick=closeSheet;el.querySelector('#tpb').onclick=async()=>{window.__ccScan=SL.Scanner.open({mode:'ref',needCard:false,title:'Batch ticket',sim:{img:await ticketImg(),geo:{lat:35.0102,lon:-81.0123,acc:5}},onDone:r=>{if(!r)return;tph=r;const i=el.querySelector('#tpi');i.src=r.img;i.hidden=false;el.querySelector('#tphn').textContent=`Photo kept ${new Date(r.t).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}${r.geo?' with GPS':''}`}})};
+  el.querySelector('#tsv').onclick=()=>{const g=id=>el.querySelector(id).value;if(!g('#tk')||!g('#tb')||!g('#td')){toast('Ticket number and both times are needed');return}
+  let ph=null;if(tph){ph='cc-'+Date.now().toString(36);const cap={id:ph,spot:p.code,app:'cylinderchain',t:tph.t,img:tph.img,w:tph.w,h:tph.h,geo:tph.geo,how:tph.how};caps.set(ph,cap);store.put('caps',cap)}
+  p.trucks.push({tk:g('#tk'),b:g('#tb'),d:g('#td'),s:+g('#ts')||0,a:+g('#ta')||0,t:+g('#tt')||0,w:+g('#tw')||0,ph});save();closeSheet();render();const f=truckFlags(p.trucks[p.trucks.length-1]).filter(x=>x[1]);toast(f.length?`Saved with ${f.length} flag${f.length>1?'s':''}`:'Ticket saved, all checks in spec')}})}
+
+function vWelcome(){return`<div class="welcome"><h2>Welcome to Cylinder Chain</h2><p style="margin:0">Log every truck ticket, label every cylinder with a scannable code, and know when breaks are due and whether the project passes ACI acceptance.</p><button class="pri" data-act="fresh">Start a project</button><button data-act="sample">Explore with a sample project</button><p class="mute">Everything stays on this phone. <a href="privacy.html">Privacy</a></p></div>`}
+function render(){if(!started){$('#view').innerHTML=vWelcome();document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current','false'));return}$('#view').innerHTML=view==='pours'?vPours():view==='breaks'?vBreaks():view==='labels'?vLabels():vProject();
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.v===view));try{history.replaceState(null,'','#'+view)}catch(e){}}
+document.addEventListener('click',async e=>{const im=e.target.closest('img[data-ph]');if(im){const c=caps.get(im.dataset.ph);c&&sheet(`<img src="${c.img}" alt="" style="width:100%;border-radius:10px"><p class="mute">${new Date(c.t).toLocaleString()}${c.geo?` · ${c.geo.lat.toFixed(6)}, ${c.geo.lon.toFixed(6)}`:''}</p><button id="cx">Close</button>`,el=>el.querySelector('#cx').onclick=closeSheet);return}
+  const b=e.target.closest('button');if(!b||b.closest('#sheet')||b.closest('.sl-root'))return;
+  if(b.dataset.act==='fresh'){S=blank();started=true;await save();await store.put('kv',{k:'cc-started',v:1});view='project';render();return}
+  if(b.dataset.act==='sample'){S=sample();started=true;await save();await store.put('kv',{k:'cc-started',v:1});view='pours';render();return}
+  if(b.dataset.act==='scan'){window.__ccScan=SL.Scanner.open({mode:'qr',title:'Scan a cylinder label',qrPrompt:'Point at a cylinder label',sim:{img:await labelImg()},onDone:r=>{if(!r||!r.code)return;const m=r.code.match(/^CC\|(P\d+)-(S\d+)-(\d+)\|/);if(!m){toast('That code isn\'t a Cylinder Chain label');return}breakSheet(`${m[1]}|${m[2]}|${+m[3]-1}`)}});return}
+  if(!started)return;
+  if(b.dataset.v){view=b.dataset.v;render();scrollTo(0,0);return}
+  if(b.dataset.open){S.open=S.open===b.dataset.open?null:b.dataset.open;save();render();return}
+  if(b.dataset.cyl){breakSheet(b.dataset.cyl);return}
+  if(b.dataset.addtruck){truckSheet(b.dataset.addtruck);return}
+  if(b.dataset.pick){const[pc,sid]=b.dataset.pick.split('|');const s=S.pours.find(p=>p.code===pc).sets.find(x=>x.id===sid);s.picked=new Date().toISOString();s.pickGeo=me?{lat:me.lat,lon:me.lon,acc:me.acc}:null;save();render();toast('Custody updated: at the lab');return}
+  if(b.dataset.cast){const[pc,ti]=b.dataset.cast.split('|');const p=S.pours.find(x=>x.code===pc);const id='S'+(p.sets.length+1);p.sets.push({id,truck:+ti,cast:new Date().toISOString(),tech:'',picked:null,cyl:PLAN[S.proj.size].map(age=>({age,load:null,frac:null}))});S.lab=`${pc}|${id}`;save();render();toast(`Set ${id} cast. Labels are ready on the Labels tab.`);return}
+  const a=b.dataset.act;
+  if(a==='newpour')pourSheet();
+  if(a==='find'){const v=$('#find').value.trim().toUpperCase().split('-');if(v.length===3)breakSheet(`${v[0]}|${v[1]}|${+v[2]-1}`);else toast('IDs look like P2-S2-3')}
+  if(a==='copylab'){const[pc,sid]=(S.lab||$('#ls').value).split('|');const p=S.pours.find(x=>x.code===pc),s=p.sets.find(x=>x.id===sid);copy(s.cyl.map((c,i)=>`${cid(p,s,i)}\t${c.age}-day\tbreak ${iso(dueOf(s,c))}\t${p.mix}`).join('\n'),'Label list copied')}
+  if(a==='copysum'){const T=tests();copy(`${S.proj.name}: 28-day strength tests (f'c ${S.proj.fc} psi, ${S.proj.size} cylinders)\n`+T.map(t=>`${t.p.code}-${t.s.id}  ${t.p.place}  ${num(t.avg)} psi${t.indOk?'':'  LOW (min '+num(minFor(t.fc))+')'}${t.run?`  run-of-3 ${num(t.run)}${t.runOk?'':'  BELOW f\'c'}`:''}`).join('\n'),'Summary copied')}
+  if(a==='reset'){if(b.textContent!=='Tap again to erase everything'){b.textContent='Tap again to erase everything';return}for(const c of caps.values())await store.del('caps',c.id);caps.clear();await store.del('kv','cc-state');await store.del('kv','cc-started');S=blank();started=false;render()}
+  if(a==='copyrec'){copy(SL.Record.pack('cylinderchain',{id:'project',name:S.proj.name,state:S},[...caps.values()]),'Project backup copied')}
+  if(a==='import'){try{const o=SL.Record.unpack($('#imp').value);if(o.app!=='cylinderchain'||!o.spot.state)throw 0;S=o.spot.state;for(const c of o.caps||[]){caps.set(c.id,c);await store.put('caps',c)}await save();view='pours';render();toast('Project restored')}catch(err){toast('That isn\'t a Cylinder Chain backup')}}
+});
+document.addEventListener('change',e=>{const t=e.target;if(t.closest('#sheet'))return;
+  if(t.id==='ls'){S.lab=t.value;save();render()}
+  if(t.id==='pn'){S.proj.name=t.value;save()}
+  if(t.id==='pz'){S.proj.size=t.value;save();render()}
+  if(t.dataset.sp){const v=parseFloat(t.value);if(!isNaN(v)){if(t.dataset.sp==='fc')S.proj.fc=v;else S.proj.spec[t.dataset.sp]=v;save()}}
+});
+async function labelImg(){const c=document.createElement('canvas');c.width=1200;c.height=900;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,0,900);gr.addColorStop(0,'#7b7a76');gr.addColorStop(1,'#55544f');g.fillStyle=gr;g.fillRect(0,0,1200,900);
+  g.fillStyle='#d9d7d2';g.beginPath();g.ellipse(600,470,260,380,0,0,7);g.fill();g.fillStyle='#bdbab3';g.fillRect(340,90,520,760);
+  const all=[];S.pours.forEach(p=>p.sets.forEach(s=>s.cyl.forEach((c,i)=>{if(!c.load)all.push({p,s,i,d:dueOf(s,c)})})));all.sort((x,y)=>x.d-y.d);if(!all.length)return c;const{p,s,i}=all[0],cy=s.cyl[i],id=cid(p,s,i);
+  const q=qrcode(0,'M');q.addData(`CC|${id}|${cy.age}D|${iso(dueOf(s,cy))}`);q.make();const im=await SL.img('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(q.createSvgTag({cellSize:8,margin:2})));
+  g.fillStyle='#fff';g.fillRect(430,230,340,430);g.drawImage(im,460,250,280,280);g.fillStyle='#111';g.font='700 30px IBM Plex Mono,monospace';g.textAlign='center';g.fillText(id,600,580);g.font='22px IBM Plex Sans,sans-serif';g.fillText(`${cy.age}-day · break ${fmt(dueOf(s,cy))}`,600,620);return c}
+async function ticketImg(){const c=document.createElement('canvas');c.width=1200;c.height=900;const g=c.getContext('2d');g.fillStyle='#3d3b36';g.fillRect(0,0,1200,900);g.save();g.translate(600,450);g.rotate(-.04);g.fillStyle='#f4f1e8';g.fillRect(-330,-400,660,800);g.fillStyle='#222';g.font='700 34px Arial';g.textAlign='center';g.fillText('DELIVERY TICKET',0,-330);g.font='22px Arial';g.textAlign='left';
+  ['Ticket no.   424031','Mix   4000-D2','Load   10.0 yd³','Batched   07:42','Water/cement   0.45','Slump target   4 in','Air target   6%','Admixtures   WR, AEA'].forEach((t,i)=>g.fillText(t,-280,-250+i*56));g.fillText('Sample ticket for the demo',-280,300);g.restore();return c}
+SL.Geo.watch(g=>{if(!g.err)me=g});
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')&&!/claude/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
+(async()=>{await store.open();const st=await store.get('kv','cc-state');started=!!(await store.get('kv','cc-started'));S=st?st.v:blank();caps=new Map((await store.all('caps')).filter(c=>c.app==='cylinderchain').map(c=>[c.id,c]));
+  const h=location.hash.slice(1);if(['pours','breaks','labels','project'].includes(h))view=h;render()})();
+}
+</script>
+</body>
+</html>
